@@ -41,8 +41,8 @@ class NameFactory(object):
         return expr if isinstance(expr, Expression) else Expression(expr)
 
 # importable references to `Unquote` instance
-# the "F" stands for "function" and "C" stands for "column", but there's no internal distinction
-C = F = NameFactory()
+# the "F" stands for "function", "C" stands for "column" and "T" stands for "table", but there's no internal distinction
+C = F = T = NameFactory()
 
 
 class VariableFactory(object):
