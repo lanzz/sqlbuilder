@@ -49,7 +49,7 @@ class Source(SQL):
 
 class TableLike(Source):
     """
-    Abstract base class for table-like data sources
+    Abstract base class for table-like data sources (tables, SELECT subqueries, VALUES expressions)
     """
 
     __slots__ = 'alias',
@@ -75,6 +75,9 @@ class TableLike(Source):
 
 
 class Table(TableLike):
+    """
+    Table reference
+    """
 
     __slots__ = 'name', 'only'
 
