@@ -122,6 +122,28 @@ class TableAlias(Source):
         return sql, args
 
 
+class SubqueryAlias(TableAlias):
+    """
+    Alias for a subquery
+    """
+
+    def __init__(self, source, alias, columns=None):
+        super(SubqueryAlias, self).__init__(source, alias)
+        self.columns = columns
+
+    def _as_sql(self, connection, context):
+        sql, args = self.source._as_sql(connection, context)
+        sql = u'({subquery}) AS {alias}'.format(
+            subquery=sql,
+            alias=connection.quote_identifier(self.alias),
+        )
+        if self.columns is not None and len(self.columns):
+            sql += u' ({columns})'.format(
+                columns=', '.join(map(connection.quote_identifier, self.columns)),
+            )
+        return sql, args
+
+
 class Join(Source):
     """
     Abstract base class for joins

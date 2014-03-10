@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from . import DataManipulationQuery
 from ..helpers import SQL, to_sql, to_sql_iter
-from ..source import wrap_source, TableAlias
+from ..source import wrap_source, TableAlias, SubqueryAlias
 from ..expression import F, Alias
 
 
@@ -256,8 +256,8 @@ class SELECT(DataManipulationQuery):
         self.offset = offset
         return self
 
-    def AS(self, alias):
-        return SelectAlias(self, alias)
+    def AS(self, alias, columns=None):
+        return SubqueryAlias(self, alias, columns=columns)
 
     def count(self, connection):
         """
@@ -363,17 +363,3 @@ class From(SQL):
         """
         self.having = expr
         return self
-
-
-class SelectAlias(TableAlias):
-    """
-    Alias for a SELECT statement used as a subquery
-    """
-
-    def _as_sql(self, connection, context):
-        sql, args = self.source._as_sql(connection, context)
-        sql = u'({subquery}) AS {alias}'.format(
-            subquery=sql,
-            alias=connection.quote_identifier(self.alias),
-        )
-        return sql, args
