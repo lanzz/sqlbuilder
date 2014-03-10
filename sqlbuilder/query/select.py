@@ -149,13 +149,6 @@ class SELECT(DataManipulationQuery):
         copy.set = [query.copy() for query in self.set]
         return copy
 
-    def __call__(self, expr, AS=None):
-        """
-        Add a column to the select list
-        """
-        self.columns.append(Alias(expr, AS) if AS else expr)
-        return self
-
     def FROM(self, *args, **kwargs):
         self.source = From(*args, **kwargs)
         return self
