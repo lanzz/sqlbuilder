@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from .helpers import SQL, to_sql, to_sql_iter, dummy_connection
-from .expression import F, Expression, Name
+from .helpers import SQL, to_sql, to_sql_iter, merge_sql, dummy_connection
 
 
 def wrap_source(source, AS=None, ONLY=None):
@@ -102,6 +101,34 @@ class Table(TableLike):
         Column identifier factory
         """
         return getattr(F, self.alias or self.name)
+
+
+class Values(TableLike):
+    """
+    VALUES expression
+    """
+
+    __slots__ = 'rows',
+
+    def __init__(self, *columns):
+        super(Values, self).__init__()
+        self.rows = [columns]
+
+    def __call__(self, *columns):
+        self.rows.append(columns)
+        return self
+
+    def _as_sql(self, connection, context):
+        if not len(self.rows):
+            raise ValueError('No rows in VALUE expression')
+        sql, args = merge_sql((to_sql_iter(row, connection, context) for row in self.rows), sep='), (')
+        sql = u'VALUES ({rows})'.format(
+            rows=sql,
+        )
+        return sql, args
+
+    def AS(self, alias, columns=None):
+        return SubqueryAlias(self, alias, columns=columns)
 
 
 class TableAlias(Source):
@@ -241,3 +268,6 @@ class ConditionalJoin(QualifiedJoin):
 
     def copy(self):
         return self.__class__(self.left.copy(), self.right.copy(), type=self.type, on=self.on, using=self.using)
+
+
+from .expression import F, Expression, Name

@@ -34,6 +34,12 @@ class NameFactory(object):
         """
         return CaseExpression()
 
+    def VALUES(self, *columns):
+        """
+        VALUES expression
+        """
+        return Values(*columns)
+
     def __call__(self, expr):
         """
         Wrap a (possibly) primitive expression in an `Expression` instance
@@ -458,3 +464,5 @@ class Sorting(SQL):
     def NULLS_LAST(self):
         self.nulls = self.LAST
         return self
+
+from .source import Values
