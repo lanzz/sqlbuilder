@@ -81,18 +81,17 @@ class Table(TableLike):
 
     def __init__(self, name, ONLY=None):
         super(Table, self).__init__()
-        if isinstance(name, Name):
-            # unwrap raw name from expression
-            name = name.name
+        if not hasattr(name, '_as_sql'):
+            # wrap raw name in an expression
+            name = Name(name)
         self.name = name
         self.only = False if ONLY is None else ONLY
-        assert isinstance(self.name, basestring), 'Table name must be a plain string or an expression'
 
     def _as_sql(self, connection, context):
-        sql = connection.quote_identifier(self.name)
+        sql, args = self.name._as_sql(connection, context)
         if self.only:
             sql = 'ONLY ' + sql
-        return sql, ()
+        return sql, args
 
     def copy(self):
         return self.__class__(self.name, ONLY=self.only)
