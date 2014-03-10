@@ -10,7 +10,9 @@ def wrap_source(source, AS=None, ONLY=None):
     Wrap join source in a `Table` instance if necessary
     """
     if not isinstance(source, Source):
-        source = Table(source, AS=AS, ONLY=ONLY)
+        source = Table(source, ONLY=ONLY)
+        if AS:
+            source = source.AS(AS)
     else:
         assert AS is None, 'Cannot assign alias to an existing source'
     return source
@@ -69,13 +71,16 @@ class TableLike(Source):
         assert self.alias is not None, 'Cannot reference columns on source with no alias'
         return getattr(F, self.alias)
 
+    def AS(self, alias):
+        return TableAlias(self, alias)
+
 
 class Table(TableLike):
 
     __slots__ = 'name', 'only'
 
-    def __init__(self, name, AS=None, ONLY=None):
-        super(Table, self).__init__(AS=AS)
+    def __init__(self, name, ONLY=None):
+        super(Table, self).__init__()
         if isinstance(name, Name):
             # unwrap raw name from expression
             name = name.name
@@ -87,12 +92,10 @@ class Table(TableLike):
         sql = connection.quote_identifier(self.name)
         if self.only:
             sql = 'ONLY ' + sql
-        if self.alias:
-            sql += u' AS ' + connection.quote_identifier(self.alias)
         return sql, ()
 
     def copy(self):
-        return self.__class__(self.name, AS=self.alias, ONLY=self.only)
+        return self.__class__(self.name, ONLY=self.only)
 
     @property
     def C(self):
@@ -100,6 +103,24 @@ class Table(TableLike):
         Column identifier factory
         """
         return getattr(F, self.alias or self.name)
+
+
+class TableAlias(Source):
+    """
+    Alias for a table-like source
+    """
+
+    def __init__(self, source, alias):
+        self.source = source
+        self.alias = alias
+
+    def _as_sql(self, connection, context):
+        sql, args = self.source._as_sql(connection, context)
+        sql = u'{source} AS {alias}'.format(
+            source=sql,
+            alias=connection.quote_identifier(self.alias),
+        )
+        return sql, args
 
 
 class Join(Source):

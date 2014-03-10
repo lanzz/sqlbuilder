@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from . import DataManipulationQuery
 from ..helpers import SQL, to_sql, to_sql_iter
-from ..source import wrap_source
+from ..source import wrap_source, TableAlias
 from ..expression import F, Alias
 
 
@@ -27,7 +27,7 @@ class SetMember(SQL):
         assert self.op in (SetMember.UNION, SetMember.INTERSECT, SetMember.EXCEPT), 'Invalid set operation: {op}'.format(op=self.op)
 
     def _as_sql(self, connection, context):
-        sql, args = self.query._as_statement(connection, context)
+        sql, args = self.query._as_sql(connection, context)
         sql = u'{query}{op}{dups}'.format(
             query=sql,
             op=self.op,
@@ -73,7 +73,7 @@ class SELECT(DataManipulationQuery):
     __slots__ = 'distinct', 'columns', 'source', 'order', 'limit', 'offset'
 
     def __init__(self, *columns, **kwargs):
-        super(SELECT, self).__init__(AS=kwargs.get('AS'))
+        super(SELECT, self).__init__()
         self.set_init(*columns, **kwargs)
         self.order = None
         self.limit = None
@@ -96,7 +96,7 @@ class SELECT(DataManipulationQuery):
         kwargs['DISTINCT'] = True
         return cls(*args, **kwargs)
 
-    def _as_statement(self, connection, context):
+    def _as_sql(self, connection, context):
         if self.columns:
             sql, args = to_sql_iter(self.columns, connection, context)
         else:
@@ -137,7 +137,7 @@ class SELECT(DataManipulationQuery):
         Limited copy for use in set
         Ordering, limiting and previous set not included
         """
-        copy = self.__class__(*self.columns, DISTINCT=self.distinct, AS=self.alias)
+        copy = self.__class__(*self.columns, DISTINCT=self.distinct)
         copy.source = None if self.source is None else self.source.copy()
         return copy
 
@@ -263,6 +263,9 @@ class SELECT(DataManipulationQuery):
         self.offset = offset
         return self
 
+    def AS(self, alias):
+        return SelectAlias(self, alias)
+
     def count(self, connection):
         """
         Return count of rows in result
@@ -367,3 +370,17 @@ class From(SQL):
         """
         self.having = expr
         return self
+
+
+class SelectAlias(TableAlias):
+    """
+    Alias for a SELECT statement used as a subquery
+    """
+
+    def _as_sql(self, connection, context):
+        sql, args = self.source._as_sql(connection, context)
+        sql = u'({subquery}) AS {alias}'.format(
+            subquery=sql,
+            alias=connection.quote_identifier(self.alias),
+        )
+        return sql, args
