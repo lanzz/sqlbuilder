@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from ..helpers import SQL, dummy_connection, dummy_context
-from ..source import TableLike
+from ..sql import SQL, NameFactory, Identifier, Variable, Table, Aliasable
+
+
+# importable references to identifier factory
+# the "F" stands for "function" and "C" stands for "column", but there's no internal distinction
+C = F = NameFactory(Identifier)
+
+# importable reference to table factory
+T = NameFactory(Table)
+
+# importable reference to variable factory
+V = NameFactory(Variable)
 
 
 class Query(SQL):
@@ -20,10 +30,9 @@ class Query(SQL):
         return cursor
 
 
-class DataManipulationQuery(Query, TableLike):
+class DataManipulationQuery(Query, Aliasable):
     """
     Abstract base class for data manipulation queries
-    All DML queries are potential table-like data sources, though not all DBMS support non-SELECT data sources
     """
 
 class DataDefinitionQuery(Query):
@@ -33,4 +42,3 @@ class DataDefinitionQuery(Query):
 
 
 from .select import SELECT
-from ..expression import F, C, V

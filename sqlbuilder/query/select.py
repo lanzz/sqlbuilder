@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from . import DataManipulationQuery
-from ..helpers import SQL, to_sql, to_sql_iter
-from ..source import wrap_source, TableAlias, SubqueryAlias
-from ..expression import F, Alias
+from . import DataManipulationQuery, F
+from ..sql import SQL, SQLIterator, SubqueryAlias, wrap_source
 
 
 class SetMember(SQL):
     """
     Member of a set of SELECT queries
     """
-
-    __slots__ = 'parent', 'op', 'all', 'query'
 
     # set operations
     UNION = ' UNION '
@@ -70,10 +66,7 @@ class SetMember(SQL):
 
 class SELECT(DataManipulationQuery):
 
-    __slots__ = 'distinct', 'columns', 'source', 'order', 'limit', 'offset'
-
     def __init__(self, *columns, **kwargs):
-        super(SELECT, self).__init__()
         self.set_init(*columns, **kwargs)
         self.order = None
         self.limit = None
@@ -98,7 +91,7 @@ class SELECT(DataManipulationQuery):
 
     def _as_sql(self, connection, context):
         if self.columns:
-            sql, args = to_sql_iter(self.columns, connection, context)
+            sql, args = SQLIterator(self.columns)._as_sql(connection, context)
         else:
             sql = '*'
             args = ()
@@ -111,22 +104,22 @@ class SELECT(DataManipulationQuery):
             sql += source_sql
             args += source_args
         if self.order is not None:
-            order_sql, order_args = to_sql_iter(self.order, connection, context)
+            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
             sql += u' ORDER BY {order}'.format(order=order_sql)
             args += order_args
         if self.limit is not None:
-            limit_sql, limit_args = to_sql(self.limit, connection, context)
+            limit_sql, limit_args = SQL.wrap(self.limit)._as_sql(connection, context)
             sql += u' LIMIT {limit}'.format(limit=limit_sql)
             args += limit_args
             if self.offset is not None:
-                offset_sql, offset_args = to_sql(self.offset, connection, context)
+                offset_sql, offset_args = SQL.wrap(self.offset)._as_sql(connection, context)
                 sql += u' OFFSET {offset}'.format(offset=offset_sql)
                 args += offset_args
         else:
             assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
 
         if self.set:
-            set_sql, set_args = to_sql_iter(self.set, connection, context)
+            set_sql, set_args = SQLIterator(self.set)._as_sql(connection, context)
             sql = set_sql + sql
             args = set_args + args
 
@@ -279,8 +272,6 @@ class From(SQL):
     FROM clause wrapper
     """
 
-    __slots__ = 'source', 'where', 'group_by', 'having'
-
     def __init__(self, source, AS=None, ONLY=None):
         self.source = wrap_source(source, AS=AS, ONLY=ONLY)
         self.where = None
@@ -288,24 +279,24 @@ class From(SQL):
         self.having = None
 
     def _as_sql(self, connection, context):
-        sql, args = to_sql(self.source, connection, context)
+        sql, args = SQL.wrap(self.source)._as_sql(connection, context)
         sql = u' FROM {source}'.format(
             source=sql,
         )
         if self.where:
-            where_sql, where_args = to_sql(self.where, connection, context)
+            where_sql, where_args = SQL.wrap(self.where)._as_sql(connection, context)
             sql += ' WHERE {condition}'.format(
                 condition=where_sql,
             )
             args += where_args
         if self.group_by:
-            group_sql, group_args = to_sql_iter(self.group_by, connection, context)
+            group_sql, group_args = SQLIterator(self.group_by)._as_sql(connection, context)
             sql += ' GROUP BY {columns}'.format(
                 columns=group_sql,
             )
             args += group_args
         if self.having:
-            having_sql, having_args = to_sql(self.having, connection, context)
+            having_sql, having_args = SQL.wrap(self.having)._as_sql(connection, context)
             sql += ' HAVING {condition}'.format(
                 condition=having_sql,
             )

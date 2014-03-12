@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from .sql import SQL
+
 
 class DummyConnection(object):
     """
@@ -11,10 +13,6 @@ class DummyConnection(object):
         """
         Dummy connection does not quote identifiers
         """
-        if hasattr(identifier, '_as_sql'):
-            sql, args = identifier._as_sql(self, {})
-            assert not len(args), 'Identifier cannot contain query parameters'
-            return sql
         return identifier
 
     # Function names quoted as generic identifiers
@@ -40,7 +38,7 @@ class DummyContext(object):
 dummy_context = DummyContext()
 
 
-class DummyVariable(object):
+class DummyVariable(SQL):
     """
     Dummy variable, renders itself as literal '$name'
     """
