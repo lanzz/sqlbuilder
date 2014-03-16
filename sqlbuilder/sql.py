@@ -24,6 +24,38 @@ def merge_sql(iterable, sep=', '):
     return sql, args
 
 
+def NameFactory(Class, prefix=None, as_sql=None):
+    """
+    Factory that converts attribute access to Identifier instances
+    Includes a few additional facilities (CASE expressions and wrapping primitive values in value expressions)
+    """
+
+    prefix = prefix or ''
+
+
+    def __getattr__(self, name):
+        return Class(prefix+name)
+    def __setattr__(self, name, value):
+        raise AttributeError(name)
+    def __delattr__(self, name):
+        raise AttributeError(name)
+
+    name = '{classname}Factory'.format(classname=Class.__name__)
+    bases = (object,)
+    attrs = dict(
+        __getattr__=__getattr__,
+        __setattr__=__setattr__,
+        __delattr__=__delattr__,
+    )
+
+    if as_sql:
+        # create factory that renders as SQL
+        attrs['_as_sql'] = as_sql
+        bases = (SQL,)
+
+    return type(name, bases, attrs)()
+
+
 class SQL(object):
     """
     Base for classes that can be rendered as SQL
@@ -312,30 +344,6 @@ class ConditionalJoin(QualifiedJoin):
             condition=condition_sql,
         )
         return sql, left_args + right_args + condition_args
-
-
-def NameFactory(Class):
-    """
-    Factory that converts attribute access to Identifier instances
-    Includes a few additional facilities (CASE expressions and wrapping primitive values in value expressions)
-    """
-
-    def __getattr__(self, name):
-        return Class(name)
-    def __setattr__(self, name, value):
-        raise AttributeError(name)
-    def __delattr__(self, name):
-        raise AttributeError(name)
-
-    name = '{classname}Factory'.format(classname=Class.__name__)
-    bases = (object,)
-    attrs = dict(
-        __getattr__=__getattr__,
-        __setattr__=__setattr__,
-        __delattr__=__delattr__,
-    )
-
-    return type(name, bases, attrs)()
 
 
 class Expression(Aliasable):
