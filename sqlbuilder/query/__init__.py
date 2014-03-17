@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from ..sql import SQL, Identifier, IdentifierFactory, Variable, VariableFactory, Table, TableFactory, Aliasable
+from ..sql import SQL, Identifier, IdentifierFactory, Variable, VariableFactory, Table, TableFactory
 
 
 # importable references to identifier factory
@@ -30,7 +30,7 @@ class Query(SQL):
         return cursor
 
 
-class DataManipulationQuery(Query, Aliasable):
+class DataManipulationQuery(Query):
     """
     Abstract base class for data manipulation queries
     """

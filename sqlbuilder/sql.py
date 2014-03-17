@@ -213,16 +213,7 @@ class SubqueryAlias(TableAlias, Joinable):
         return sql, origin_args + alias_args
 
 
-class Aliasable(SQL):
-    """
-    Base class for aliasable classes (expressions, tables, subqueries)
-    """
-
-    def AS(self, alias):
-        return Alias(self, alias)
-
-
-class Table(Aliasable, Joinable):
+class Table(Joinable):
     """
     Table reference
     """
@@ -271,7 +262,7 @@ class Wildcard(SQL):
         return sql, args
 
 
-class Values(Aliasable):
+class VALUES(SQL):
     """
     VALUES expression
     """
@@ -385,7 +376,7 @@ class ConditionalJoin(QualifiedJoin):
         return sql, left_args + right_args + condition_args
 
 
-class Expression(Aliasable):
+class Expression(SQL):
     """
     Wrapper for an expression
     """
@@ -463,7 +454,7 @@ class Expression(Aliasable):
     def NULLS_LAST(self): return Sorting(self, nulls=Sorting.LAST)
 
 
-class Variable(Expression, Aliasable):
+class Variable(Expression):
     """
     Variable placeholder
     """
@@ -479,7 +470,8 @@ class Variable(Expression, Aliasable):
 
 VariableFactory = NameFactory(Variable)
 
-class Identifier(Expression, Aliasable):
+
+class Identifier(Expression):
     """
     Raw name — can be a column reference or a function call
     """
@@ -510,7 +502,8 @@ class Identifier(Expression, Aliasable):
 
 IdentifierFactory = NameFactory(Identifier, as_sql=lambda self, connection, context: Wildcard()._as_sql(connection, context))
 
-class Value(Expression, Aliasable):
+
+class Value(Expression):
 
     def __init__(self, value):
         self.value = value
@@ -525,7 +518,7 @@ class Value(Expression, Aliasable):
         return '<Value {value!r}>'.format(value=self.value)
 
 
-class FunctionCall(Expression, Aliasable):
+class FunctionCall(Expression):
     """
     Function call wrapper
     """
