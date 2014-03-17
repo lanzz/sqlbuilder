@@ -24,7 +24,7 @@ class Query(SQL):
         """
         Allocate a cursor from the connection and execute the query
         """
-        sql = self._as_sql(connection, context)
+        sql, args = self._as_sql(connection, context)
         cursor = connection.cursor()
         cursor.execute(sql, *args)
         return cursor
