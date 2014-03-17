@@ -77,28 +77,36 @@ class SELECT(DataManipulationQuery):
         """
         Limited initialization for a new set query
         """
-        self.distinct = kwargs.get('DISTINCT', False)
+        self.distinct = None
         self.columns = list(columns)
         self.source = None
 
-    @classmethod
-    def DISTINCT(cls, *args, **kwargs):
-        """
-        Convenience constructor for SELECT DISTINCT queries
-        """
-        kwargs['DISTINCT'] = True
-        return cls(*args, **kwargs)
+    def DISTINCT(self, *expr):
+        self.distinct = expr
+        return self
 
     def _as_sql(self, connection, context):
-        if self.columns:
-            sql, args = SQLIterator(self.columns)._as_sql(connection, context)
+        if self.distinct is not None:
+            distinct_sql, distinct_args = SQLIterator(self.distinct)._as_sql(connection, context)
+            distinct_sql = u'DISTINCT {on}'.format(
+                on=u'ON ({expr}) '.format(expr=distinct_sql) if distinct_sql else u'',
+            )
         else:
-            sql = '*'
-            args = ()
+            distinct_sql = u''
+            distinct_args = ()
+
+        if self.columns:
+            columns_sql, columns_args = SQLIterator(self.columns)._as_sql(connection, context)
+        else:
+            columns_sql = u'*'
+            columns_args = ()
+
         sql = u'SELECT {distinct}{columns}'.format(
-            distinct='DISTINCT ' if self.distinct else '',
-            columns=sql,
+            distinct=distinct_sql,
+            columns=columns_sql,
         )
+        args = distinct_args + columns_args
+
         if self.source is not None:
             source_sql, source_args = self.source._as_sql(connection, context)
             sql += source_sql
