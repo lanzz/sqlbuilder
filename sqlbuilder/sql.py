@@ -243,6 +243,9 @@ class Table(Aliasable, Joinable):
             subname=name,
         ), ONLY=self._only)
 
+    def AS(self, *args, **kwargs):
+        return TableAlias(self, *args, **kwargs)
+
     def __call__(self):
         """
         Column identifier factory
