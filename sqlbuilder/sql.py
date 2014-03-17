@@ -215,14 +215,20 @@ class Table(Aliasable, Joinable):
     """
 
     def __init__(self, name, ONLY=None):
-        self.name = name
-        self.only = False if ONLY is None else ONLY
+        self._name = name
+        self._only = False if ONLY is None else ONLY
 
     def _as_sql(self, connection, context):
-        sql, args = SQL.wrap(self.name, id=True)._as_sql(connection, context)
-        if self.only:
+        sql, args = SQL.wrap(self._name, id=True)._as_sql(connection, context)
+        if self._only:
             sql = 'ONLY ' + sql
         return sql, args
+
+    def __getattr__(self, name):
+        return Table('{name}.{subname}'.format(
+            name=self._name,
+            subname=name,
+        ), ONLY=self._only)
 
     @property
     def C(self):
