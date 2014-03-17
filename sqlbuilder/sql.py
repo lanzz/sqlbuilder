@@ -281,8 +281,8 @@ class Values(Aliasable):
         )
         return sql, args
 
-    def AS(self, alias, columns=None):
-        return SubqueryAlias(self, alias, columns=columns)
+    def AS(self, *args, **kwargs):
+        return SubqueryAlias(self, *args, **kwargs)
 
 
 class Join(Joinable):
@@ -431,8 +431,8 @@ class Expression(Aliasable):
     @property
     def IS_NOT_NULL(self): return IsNullOperator(self, invert=True)
 
-    # expressions are Aliasable
-    def AS(self, alias): return Alias(self, alias)
+    # expressions are aliasable
+    def AS(self, *args, **kwargs): return Alias(self, *args, **kwargs)
 
     # ORDER BY qualifiers
     @property
