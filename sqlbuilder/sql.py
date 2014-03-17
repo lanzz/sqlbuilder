@@ -193,14 +193,16 @@ class SubqueryAlias(TableAlias, Joinable):
     Alias of a subquery
     """
 
-    def __init__(self, origin, alias, columns=None):
+    def __init__(self, origin, alias, columns=None, LATERAL=None):
         super(SubqueryAlias, self).__init__(origin, alias)
         self._columns = columns
+        self._lateral = LATERAL or False
 
     def _as_sql(self, connection, context):
         origin_sql, origin_args = SQL.wrap(self._origin)._as_sql(connection, context)
         alias_sql, alias_args = SQL.wrap(self._alias, id=True)._as_sql(connection, context)
-        sql = u'({origin}) AS {alias}'.format(
+        sql = u'{lateral}({origin}) AS {alias}'.format(
+            lateral='LATERAL ' if self._lateral else '',
             origin=origin_sql,
             alias=alias_sql,
         )
