@@ -162,42 +162,53 @@ class Alias(SQL):
     Alias of an expression
     """
 
-    def __init__(self, expr, alias):
-        self.expr = expr
-        self.alias = alias
+    def __init__(self, origin, alias):
+        self._origin = origin
+        self._alias = alias
 
     def _as_sql(self, connection, context):
-        expr_sql, expr_args = SQL.wrap(self.expr)._as_sql(connection, context)
-        alias_sql, alias_args = SQL.wrap(self.alias, id=True)._as_sql(connection, context)
-        sql = u'{expr} AS {alias}'.format(
-            expr=expr_sql,
+        origin_sql, origin_args = SQL.wrap(self._origin)._as_sql(connection, context)
+        alias_sql, alias_args = SQL.wrap(self._alias, id=True)._as_sql(connection, context)
+        sql = u'{origin} AS {alias}'.format(
+            origin=origin_sql,
             alias=alias_sql,
         )
-        return sql, expr_args + alias_args
+        return sql, origin_args + alias_args
 
 
-class SubqueryAlias(Joinable):
+class TableAlias(Alias):
+    """
+    Alias of a table
+    """
+
+    def __getattr__(self, name):
+        return Identifier('{name}.{subname}'.format(
+            name=self._alias,
+            subname=name,
+        ))
+
+
+class SubqueryAlias(TableAlias, Joinable):
     """
     Alias of a subquery
     """
 
-    def __init__(self, query, alias, columns=None):
-        self.query = query
-        self.alias = alias
-        self.columns = columns
+    def __init__(self, origin, alias, columns=None):
+        super(SubqueryAlias, self).__init__(origin, alias)
+        self._columns = columns
 
     def _as_sql(self, connection, context):
-        query_sql, query_args = SQL.wrap(self.query)._as_sql(connection, context)
-        alias_sql, alias_args = SQL.wrap(self.alias, id=True)._as_sql(connection, context)
-        sql = u'({query}) AS {alias}'.format(
-            query=query_sql,
+        origin_sql, origin_args = SQL.wrap(self._origin)._as_sql(connection, context)
+        alias_sql, alias_args = SQL.wrap(self._alias, id=True)._as_sql(connection, context)
+        sql = u'({origin}) AS {alias}'.format(
+            origin=origin_sql,
             alias=alias_sql,
         )
-        if self.columns is not None and len(self.columns):
+        if self._columns is not None and len(self._columns):
             sql += u' ({columns})'.format(
-                columns=SQLIterator(self.columns, id=True)._as_sql(connection, context),
+                columns=SQLIterator(self._columns, id=True)._as_sql(connection, context),
             )
-        return sql, query_args + alias_args
+        return sql, origin_args + alias_args
 
 
 class Aliasable(SQL):
