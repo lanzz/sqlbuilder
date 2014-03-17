@@ -230,12 +230,27 @@ class Table(Aliasable, Joinable):
             subname=name,
         ), ONLY=self._only)
 
-    @property
-    def C(self):
+    def __call__(self):
         """
         Column identifier factory
         """
-        return getattr(F, self.alias or self.name)
+        return NameFactory(Identifier, prefix=self._name + '.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
+
+
+class Wildcard(SQL):
+    """
+    `table.*` wildcard
+    """
+
+    def __init__(self, table=None):
+        self.table = table
+
+    def _as_sql(self, connection, context):
+        if not self.table:
+            return '*', ()
+        sql, args = self.table._as_sql(connection, context)
+        sql += '.*'
+        return sql, args
 
 
 class Values(Aliasable):
