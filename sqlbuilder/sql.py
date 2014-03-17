@@ -252,6 +252,8 @@ class Table(Aliasable, Joinable):
         """
         return NameFactory(Identifier, prefix=self._name + '.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
 
+TableFactory = NameFactory(Table)
+
 
 class Wildcard(SQL):
     """
@@ -475,6 +477,7 @@ class Variable(Expression, Aliasable):
     def __repr__(self):
         return '<Variable {name!r}>'.format(name=self.name)
 
+VariableFactory = NameFactory(Variable)
 
 class Identifier(Expression, Aliasable):
     """
@@ -505,6 +508,7 @@ class Identifier(Expression, Aliasable):
         """
         return FunctionCall(self.name, *args, **kwargs)
 
+IdentifierFactory = NameFactory(Identifier, as_sql=lambda self, connection, context: Wildcard()._as_sql(connection, context))
 
 class Value(Expression, Aliasable):
 

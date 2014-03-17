@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from ..sql import SQL, NameFactory, Identifier, Variable, Table, Aliasable
+from ..sql import SQL, Identifier, IdentifierFactory, Variable, VariableFactory, Table, TableFactory, Aliasable
 
 
 # importable references to identifier factory
 # the "F" stands for "function" and "C" stands for "column", but there's no internal distinction
-C = F = NameFactory(Identifier)
+C = F = IdentifierFactory
 
 # importable reference to table factory
-T = NameFactory(Table)
+T = TableFactory
 
 # importable reference to variable factory
-V = NameFactory(Variable)
+V = VariableFactory
 
 
 class Query(SQL):
