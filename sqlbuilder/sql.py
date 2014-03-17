@@ -14,10 +14,10 @@ def merge_sql(iterable, sep=', '):
     """
 
     if iterable is None:
-        return '', ()
+        return u'', ()
     iterable = list(iterable)
     if not len(iterable):
-        return '', ()
+        return u'', ()
     sql, args = zip(*iterable)
     sql = sep.join(sql)
     args = sum(args, ())
@@ -81,7 +81,7 @@ class SQL(object):
 
     def __repr__(self):
         sql, args = self._as_sql(dummy_connection, dummy_context)
-        return '<{name} {sql!r}, {args!r}>'.format(
+        return u'<{name} {sql!r}, {args!r}>'.format(
             name=self.__class__.__name__,
             sql=sql,
             args=args,
@@ -202,7 +202,7 @@ class SubqueryAlias(TableAlias, Joinable):
         origin_sql, origin_args = SQL.wrap(self._origin)._as_sql(connection, context)
         alias_sql, alias_args = SQL.wrap(self._alias, id=True)._as_sql(connection, context)
         sql = u'{lateral}({origin}) AS {alias}'.format(
-            lateral='LATERAL ' if self._lateral else '',
+            lateral=u'LATERAL ' if self._lateral else u'',
             origin=origin_sql,
             alias=alias_sql,
         )
@@ -225,11 +225,11 @@ class Table(Joinable):
     def _as_sql(self, connection, context):
         sql, args = SQL.wrap(self._name, id=True)._as_sql(connection, context)
         if self._only:
-            sql = 'ONLY ' + sql
+            sql = u'ONLY ' + sql
         return sql, args
 
     def __getattr__(self, name):
-        return Table('{name}.{subname}'.format(
+        return Table(u'{name}.{subname}'.format(
             name=self._name,
             subname=name,
         ), ONLY=self._only)
@@ -241,7 +241,7 @@ class Table(Joinable):
         """
         Column identifier factory
         """
-        return NameFactory(Identifier, prefix=self._name + '.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
+        return NameFactory(Identifier, prefix=self._name + u'.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
 
 TableFactory = NameFactory(Table)
 
@@ -256,9 +256,9 @@ class Wildcard(SQL):
 
     def _as_sql(self, connection, context):
         if not self.table:
-            return '*', ()
+            return u'*', ()
         sql, args = self.table._as_sql(connection, context)
-        sql += '.*'
+        sql += u'.*'
         return sql, args
 
 
@@ -286,7 +286,7 @@ class VALUES(SQL):
             rows.append(u'({row})'.format(row=row_sql))
             args += row_args
         sql = u'VALUES {rows}'.format(
-            rows=', '.join(rows),
+            rows=u', '.join(rows),
         )
         return sql, args
 
@@ -300,10 +300,10 @@ class Join(Joinable):
     """
 
     # constants
-    INNER = 'INNER'
-    LEFT = 'LEFT OUTER'
-    RIGHT = 'RIGHT OUTER'
-    FULL = 'FULL OUTER'
+    INNER = u'INNER'
+    LEFT = u'LEFT OUTER'
+    RIGHT = u'RIGHT OUTER'
+    FULL = u'FULL OUTER'
 
     def __init__(self, left, right):
         self.left = left
@@ -381,52 +381,52 @@ class Expression(SQL):
     Wrapper for an expression
     """
 
-    def __lt__(self, other): return BinaryOperator(self, ' < ', other)
-    def __le__(self, other): return BinaryOperator(self, ' <= ', other)
-    def __eq__(self, other): return BinaryOperator(self, ' = ', other)
-    def __ne__(self, other): return BinaryOperator(self, ' <> ', other)
-    def __gt__(self, other): return BinaryOperator(self, ' > ', other)
-    def __ge__(self, other): return BinaryOperator(self, ' >= ', other)
+    def __lt__(self, other): return BinaryOperator(self, u' < ', other)
+    def __le__(self, other): return BinaryOperator(self, u' <= ', other)
+    def __eq__(self, other): return BinaryOperator(self, u' = ', other)
+    def __ne__(self, other): return BinaryOperator(self, u' <> ', other)
+    def __gt__(self, other): return BinaryOperator(self, u' > ', other)
+    def __ge__(self, other): return BinaryOperator(self, u' >= ', other)
 
-    def __add__(self, other): return BinaryOperator(self, ' + ', other)
-    def __sub__(self, other): return BinaryOperator(self, ' - ', other)
-    def __mul__(self, other): return BinaryOperator(self, ' * ', other)
-    def __div__(self, other): return BinaryOperator(self, ' / ', other)
-    def __truediv__(self, other): return BinaryOperator(self, ' / ', other)
-    def __floordiv__(self, other): return BinaryOperator(self, ' / ', other)
-    def __mod__(self, other): return FunctionCall('mod', self, other)
-    def __pow__(self, other): return FunctionCall('power', self, other)
-    def __lshift__(self, other): return BinaryOperator(self, ' << ', other)
-    def __rshift__(self, other): return BinaryOperator(self, ' >> ', other)
-    def __and__(self, other): return BinaryOperator(self, ' & ', other)
-    def __xor__(self, other): return BinaryOperator(self, ' ^ ', other)
-    def __or__(self, other): return BinaryOperator(self, ' | ', other)
+    def __add__(self, other): return BinaryOperator(self, u' + ', other)
+    def __sub__(self, other): return BinaryOperator(self, u' - ', other)
+    def __mul__(self, other): return BinaryOperator(self, u' * ', other)
+    def __div__(self, other): return BinaryOperator(self, u' / ', other)
+    def __truediv__(self, other): return BinaryOperator(self, u' / ', other)
+    def __floordiv__(self, other): return BinaryOperator(self, u' / ', other)
+    def __mod__(self, other): return FunctionCall(u'mod', self, other)
+    def __pow__(self, other): return FunctionCall(u'power', self, other)
+    def __lshift__(self, other): return BinaryOperator(self, u' << ', other)
+    def __rshift__(self, other): return BinaryOperator(self, u' >> ', other)
+    def __and__(self, other): return BinaryOperator(self, u' & ', other)
+    def __xor__(self, other): return BinaryOperator(self, u' ^ ', other)
+    def __or__(self, other): return BinaryOperator(self, u' | ', other)
 
-    def __radd__(self, other): return BinaryOperator(other, ' + ', self)
-    def __rsub__(self, other): return BinaryOperator(other, ' - ', self)
-    def __rmul__(self, other): return BinaryOperator(other, ' * ', self)
-    def __rdiv__(self, other): return BinaryOperator(other, ' / ', self)
-    def __rtruediv__(self, other): return BinaryOperator(other, ' / ', self)
-    def __rfloordiv__(self, other): return BinaryOperator(other, ' / ', self)
-    def __rmod__(self, other): return FunctionCall('mod', other, self)
-    def __rpow__(self, other): return FunctionCall('power', other, self)
-    def __rlshift__(self, other): return BinaryOperator(other, ' << ', self)
-    def __rrshift__(self, other): return BinaryOperator(other, ' >> ', self)
-    def __rand__(self, other): return BinaryOperator(other, ' & ', self)
-    def __rxor__(self, other): return BinaryOperator(other, ' ^ ', self)
-    def __ror__(self, other): return BinaryOperator(other, ' | ', self)
+    def __radd__(self, other): return BinaryOperator(other, u' + ', self)
+    def __rsub__(self, other): return BinaryOperator(other, u' - ', self)
+    def __rmul__(self, other): return BinaryOperator(other, u' * ', self)
+    def __rdiv__(self, other): return BinaryOperator(other, u' / ', self)
+    def __rtruediv__(self, other): return BinaryOperator(other, u' / ', self)
+    def __rfloordiv__(self, other): return BinaryOperator(other, u' / ', self)
+    def __rmod__(self, other): return FunctionCall(u'mod', other, self)
+    def __rpow__(self, other): return FunctionCall(u'power', other, self)
+    def __rlshift__(self, other): return BinaryOperator(other, u' << ', self)
+    def __rrshift__(self, other): return BinaryOperator(other, u' >> ', self)
+    def __rand__(self, other): return BinaryOperator(other, u' & ', self)
+    def __rxor__(self, other): return BinaryOperator(other, u' ^ ', self)
+    def __ror__(self, other): return BinaryOperator(other, u' | ', self)
 
-    def __neg__(self): return UnaryOperator('-', self)
-    def __pos__(self): return UnaryOperator('+', self)
-    def __abs__(self): return FunctionCall('abs', self)
-    def __invert__(self): return UnaryOperator('~', self)
+    def __neg__(self): return UnaryOperator(u'-', self)
+    def __pos__(self): return UnaryOperator(u'+', self)
+    def __abs__(self): return FunctionCall(u'abs', self)
+    def __invert__(self): return UnaryOperator(u'~', self)
 
     # Python doesn't allow overriding of the behavior of basic logical operators, so these are methods instead
-    def AND(self, other): return BinaryOperator(self, ' AND ', other)
-    def XOR(self, other): return BinaryOperator(self, ' XOR ', other)
-    def OR(self, other): return BinaryOperator(self, ' OR ', other)
+    def AND(self, other): return BinaryOperator(self, u' AND ', other)
+    def XOR(self, other): return BinaryOperator(self, u' XOR ', other)
+    def OR(self, other): return BinaryOperator(self, u' OR ', other)
     @property
-    def NOT(self): return UnaryOperator('NOT ', self)
+    def NOT(self): return UnaryOperator(u'NOT ', self)
 
     # common SQL operators
     def LIKE(self, other): return LikeOperator(self, other)
@@ -466,7 +466,7 @@ class Variable(Expression):
         return SQL.wrap(context[self.name])._as_sql(connection, context)
 
     def __repr__(self):
-        return '<Variable {name!r}>'.format(name=self.name)
+        return u'<Variable {name!r}>'.format(name=self.name)
 
 VariableFactory = NameFactory(Variable)
 
@@ -486,10 +486,10 @@ class Identifier(Expression):
         return connection.quote_identifier(self.name), ()
 
     def __repr__(self):
-        return '<Identifier {name!r}>'.format(name=self.name)
+        return u'<Identifier {name!r}>'.format(name=self.name)
 
     def __getattr__(self, name):
-        return Identifier('{name}.{subname}'.format(
+        return Identifier(u'{name}.{subname}'.format(
             name=self.name,
             subname=name,
         ))
@@ -512,10 +512,10 @@ class Value(Expression):
         """
         Return SQL for this instance
         """
-        return '%s', ( self.value, )
+        return u'%s', ( self.value, )
 
     def __repr__(self):
-        return '<Value {value!r}>'.format(value=self.value)
+        return u'<Value {value!r}>'.format(value=self.value)
 
 
 class FunctionCall(Expression):
@@ -532,7 +532,7 @@ class FunctionCall(Expression):
         sql, args = SQLIterator(self.params)._as_sql(connection, context)
         sql = u'{name}({distinct}{params})'.format(
             name=connection.quote_function_name(self.name),
-            distinct='DISTINCT ' if self.distinct else '',
+            distinct=u'DISTINCT ' if self.distinct else u'',
             params=sql,
         )
         return sql, args
@@ -621,9 +621,9 @@ class LikeOperator(BinaryOperator):
     """
 
     def __init__(self, left, right, nocase=False, invert=False):
-        op = ' ILIKE ' if nocase else ' LIKE '
+        op = u' ILIKE ' if nocase else u' LIKE '
         if invert:
-            op = ' NOT' + op
+            op = u' NOT' + op
         super(LikeOperator, self).__init__(left, op, right)
         self.nocase = nocase
         self.invert = invert
@@ -639,7 +639,7 @@ class InOperator(BinaryOperator):
     """
 
     def __init__(self, left, right, invert=False):
-        super(InOperator, self).__init__(left, ' NOT IN ' if invert else ' IN ', right)
+        super(InOperator, self).__init__(left, u' NOT IN ' if invert else u' IN ', right)
         self.invert = invert
 
     @property
@@ -648,7 +648,7 @@ class InOperator(BinaryOperator):
 
     def right_to_sql(self, connection, context):
         sql, args = SQLIterator(self.right)._as_sql(connection, context)
-        sql = '({items})'.format(items=sql)
+        sql = u'({items})'.format(items=sql)
         return sql, args
 
 
@@ -658,7 +658,7 @@ class IsNullOperator(UnaryPostfixOperator):
     """
 
     def __init__(self, operand, invert=False):
-        super(IsNullOperator, self).__init__(' IS NOT NULL' if invert else ' IS NULL', operand)
+        super(IsNullOperator, self).__init__(u' IS NOT NULL' if invert else u' IS NULL', operand)
         self.invert = invert
 
     def NOT(self):
@@ -701,7 +701,7 @@ class CaseExpression(Expression):
             else_sql, else_args = SQL.wrap(self.else_)._as_sql(connection, context)
             else_sql = u' ELSE {value}'.format(value=else_sql)
         else:
-            else_sql = ''
+            else_sql = u''
             else_args = ()
         sql = u'CASE {cases}{else_} END'.format(
             cases=cases_sql,
@@ -717,12 +717,12 @@ class Sorting(SQL):
     """
 
     # directions
-    ASC = ' ASC'
-    DESC = ' DESC'
+    ASC = u' ASC'
+    DESC = u' DESC'
 
     # nulls ordering
-    FIRST = ' NULLS FIRST'
-    LAST = ' NULLS LAST'
+    FIRST = u' NULLS FIRST'
+    LAST = u' NULLS LAST'
 
     def __init__(self, expr, direction=None, nulls=None):
         self.expr = expr

@@ -11,9 +11,9 @@ class SetMember(SQL):
     """
 
     # set operations
-    UNION = ' UNION '
-    INTERSECT = ' INTERSECT '
-    EXCEPT = ' EXCEPT '
+    UNION = u' UNION '
+    INTERSECT = u' INTERSECT '
+    EXCEPT = u' EXCEPT '
 
     def __init__(self, parent, op, all=None):
         self.parent = parent
@@ -27,7 +27,7 @@ class SetMember(SQL):
         sql = u'{query}{op}{dups}'.format(
             query=sql,
             op=self.op,
-            dups='' if self.all is None else 'ALL ' if self.all else 'DISTINCT ',
+            dups=u'' if self.all is None else u'ALL ' if self.all else u'DISTINCT ',
         )
         return sql, args
 
@@ -293,19 +293,19 @@ class From(SQL):
         )
         if self.where:
             where_sql, where_args = SQL.wrap(self.where)._as_sql(connection, context)
-            sql += ' WHERE {condition}'.format(
+            sql += u' WHERE {condition}'.format(
                 condition=where_sql,
             )
             args += where_args
         if self.group_by:
             group_sql, group_args = SQLIterator(self.group_by)._as_sql(connection, context)
-            sql += ' GROUP BY {columns}'.format(
+            sql += u' GROUP BY {columns}'.format(
                 columns=group_sql,
             )
             args += group_args
         if self.having:
             having_sql, having_args = SQL.wrap(self.having)._as_sql(connection, context)
-            sql += ' HAVING {condition}'.format(
+            sql += u' HAVING {condition}'.format(
                 condition=having_sql,
             )
             args += having_args
