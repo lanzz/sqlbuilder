@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 from . import DataManipulationQuery, F
-from ..sql import SQL, SQLIterator, SubqueryAlias, wrap_source
+from ..sql import SQL, SQLIterator, SubqueryAlias, wrap_source, Window
 
 
 class SetMember(SQL):
@@ -72,6 +72,7 @@ class SELECT(DataManipulationQuery):
         self.limit = None
         self.offset = None
         self.set = []
+        self.windows = {}
 
     def set_init(self, *columns, **kwargs):
         """
@@ -111,6 +112,19 @@ class SELECT(DataManipulationQuery):
             source_sql, source_args = self.source._as_sql(connection, context)
             sql += source_sql
             args += source_args
+        if self.windows:
+            windows = []
+            for name, window in sorted(self.windows.iteritems()):
+                alias_sql, alias_args = SQL.wrap(name, id=True)._as_sql(connection, context)
+                window_sql, window_args = window._as_sql(connection, context)
+                windows.append(u'{name} AS {window}'.format(
+                    name=alias_sql,
+                    window=window_sql,
+                ))
+                args += alias_args + window_args
+            sql += u' WINDOW {windows}'.format(
+                windows=', '.join(windows),
+            )
         if self.order is not None:
             order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
             sql += u' ORDER BY {order}'.format(order=order_sql)
@@ -198,6 +212,14 @@ class SELECT(DataManipulationQuery):
         Set up a HAVING clause on the data source
         """
         self.source.HAVING(*args, **kwargs)
+        return self
+
+    def WINDOW(self, name, *args, **kwargs):
+        """
+        Set up a named window definition
+        """
+        assert name not in self.windows, 'Duplicate window name: {name}'.format(name=name)
+        self.windows[name] = Window(*args, **kwargs)
         return self
 
     @property

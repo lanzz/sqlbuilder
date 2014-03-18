@@ -537,6 +537,28 @@ class FunctionCall(Expression):
         )
         return sql, args
 
+    def OVER(self, *args, **kwargs):
+        return WindowFunctionCall(self, *args, **kwargs)
+
+
+class WindowFunctionCall(FunctionCall):
+    """
+    Window function call wrapper
+    """
+
+    def __init__(self, call, *args, **kwargs):
+        self.call = call
+        self.window = Window(*args, **kwargs) if (len(args) != 1) or kwargs else SQL.wrap(args[0], id=True)
+
+    def _as_sql(self, connection, context):
+        call_sql, call_args = self.call._as_sql(connection, context)
+        window_sql, window_args = self.window._as_sql(connection, context)
+        sql = u'{call} OVER {window}'.format(
+            call=call_sql,
+            window=window_sql,
+        )
+        return sql, call_args + window_args
+
 
 class BinaryOperator(Expression):
     """
@@ -750,5 +772,86 @@ class Sorting(SQL):
         self.nulls = self.LAST
         return self
 
+
+class Window(SQL):
+    """
+    Window definition
+    """
+
+    # frame types
+    RANGE = u'RANGE'
+    ROWS = u'ROWS'
+
+    # frame reference endpoints
+    START = u'UNBOUNDED PRECEDING'
+    END = u'UNBOUNDED FOLLOWING'
+
+    def __init__(self, window=None, PARTITION_BY=None, ORDER_BY=None, RANGE=None, ROWS=None):
+        self.window = window
+        self.partition = PARTITION_BY
+        self.order = ORDER_BY
+        self.range = RANGE
+        self.rows = ROWS
+        assert not (self.range and self.rows), 'Cannot specify both RANGE and ROWS frames'
+
+    def reference(self, offset, endpoint=None):
+        if offset is None:
+            return endpoint, ()
+        if offset < 0:
+            return u'%s PRECEDING', (abs(offset),)
+        if offset > 0:
+            return u'%s FOLLOWING', (offset,)
+        return u'CURRENT ROW', ()
+
+    def _as_sql(self, connection, context):
+        clauses = []
+        args = ()
+        if self.window:
+            window_sql, window_args = SQL.wrap(self.window, id=True)._as_sql(connection, context)
+            clauses.append(window_sql)
+            args += args
+        if self.partition:
+            partition_sql, partition_args = SQLIterator(self.partition)._as_sql(connection, context)
+            clauses.append(u'PARTITION BY {expr}'.format(
+                expr=partition_sql,
+            ))
+            args += partition_args
+        if self.order:
+            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
+            clauses.append(u'ORDER BY {expr}'.format(
+                expr=order_sql,
+            ))
+            args += order_args
+        if self.range or self.rows:
+            if self.range:
+                frame_type = self.RANGE
+                frame = self.range
+            else:
+                frame_type = self.ROWS
+                frame = self.rows
+            try:
+                start, end = frame
+            except TypeError:
+                # single value
+                start_sql, start_args = self.reference(frame, self.START)
+                clauses.append(u'{type} {start}'.format(
+                    type=frame_type,
+                    start=start_sql,
+                ))
+                args += start_args
+            else:
+                # range
+                start_sql, start_args = self.reference(start, self.START)
+                end_sql, end_args = self.reference(end, self.END)
+                clauses.append(u'{type} BETWEEN {start} AND {end}'.format(
+                    type=frame_type,
+                    start=start_sql,
+                    end=end_sql,
+                ))
+                args += start_args + end_args
+        sql = u'({clauses})'.format(
+            clauses=' '.join(clauses),
+        )
+        return sql, args
 
 from .dummy import dummy_connection, dummy_context
