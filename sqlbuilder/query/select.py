@@ -3,84 +3,63 @@ from __future__ import absolute_import
 
 from . import DataManipulationQuery, F
 from ..sql import SQL, SQLIterator, SubqueryAlias, wrap_source, Window
+from ..utils import Const
 
 
-class SetMember(SQL):
+class BaseSelect(DataManipulationQuery):
     """
-    Member of a set of SELECT queries
+    Base class for SELECT-like queries (actual SELECT statements and set operations)
     """
 
-    # set operations
-    UNION = u' UNION '
-    INTERSECT = u' INTERSECT '
-    EXCEPT = u' EXCEPT '
-
-    def __init__(self, parent, op, all=None):
-        self.parent = parent
-        self.op = op
-        self.all = all
-        self.query = parent.set_copy()
-        assert self.op in (SetMember.UNION, SetMember.INTERSECT, SetMember.EXCEPT), 'Invalid set operation: {op}'.format(op=self.op)
-
-    def _as_sql(self, connection, context):
-        sql, args = self.query._as_sql(connection, context)
-        sql = u'{query}{op}{dups}'.format(
-            query=sql,
-            op=self.op,
-            dups=u'' if self.all is None else u'ALL ' if self.all else u'DISTINCT ',
-        )
-        return sql, args
-
-    def copy(self, new_parent=None):
-        copy = self.__class__(new_parent or self.query, self.op, all=self.all)
-        copy.query = self.query.copy()
-        return copy
-
-    @property
-    def ALL(self):
-        self.all = True
-        return self
-
-    @property
-    def DISTINCT(self):
-        self.all = False
-        return self
-
-    @property
-    def SELECT(self):
-        """
-        Start the member query
-        Weird property decoration allows for both `.SELECT(...)` and `.SELECT.DISTINCT(...)` invocations
-        """
-        def SELECT(*args, **kwargs):
-            """
-            Copy the current parent query as this member's query
-            """
-            return self.parent.set_add(self, *args, **kwargs)
-        def DISTINCT(*args, **kwargs):
-            kwargs['DISTINCT'] = True
-            return SELECT(self, *args, **kwargs)
-        SELECT.DISTINCT = DISTINCT
-        return SELECT
-
-
-class SELECT(DataManipulationQuery):
-
-    def __init__(self, *columns, **kwargs):
-        self.set_init(*columns, **kwargs)
+    def __init__(self):
         self.order = None
         self.limit = None
         self.offset = None
-        self.set = []
-        self.windows = {}
 
-    def set_init(self, *columns, **kwargs):
+    # set operations
+    def __or__(self, other): return SelectSet(self, other, SelectSet.OP.UNION)
+    def __and__(self, other): return SelectSet(self, other, SelectSet.OP.INTERSECT)
+    def __sub__(self, other): return SelectSet(self, other, SelectSet.OP.EXCEPT)
+
+    def ORDER_BY(self, *exprs):
+        self.order = exprs
+        return self
+
+    def LIMIT(self, limit, offset=None):
+        self.limit = limit
+        self.offset = offset
+        return self
+
+    def OFFSET(self, offset):
+        self.offset = offset
+        return self
+
+    def AS(self, *args, **kwargs):
+        return SubqueryAlias(self, *args, **kwargs)
+
+    def count(self, connection):
         """
-        Limited initialization for a new set query
+        Return count of rows in result
         """
+        cursor = SELECT(F.count()).source(self.set).execute(connection)
+        return cursor.fetchone()[0]
+
+    def total_count(self, connection):
+        """
+        Return total count of rows in result with no limits applied
+        """
+        cursor = SELECT(F.count()).source(self.copy().limit(None, None)).execute(connection)
+        return cursor.fetchone()[0]
+
+
+class SELECT(BaseSelect):
+
+    def __init__(self, *columns, **kwargs):
+        super(SELECT, self).__init__()
         self.distinct = None
         self.columns = list(columns)
         self.source = None
+        self.windows = {}
 
     def DISTINCT(self, *expr):
         self.distinct = expr
@@ -140,21 +119,7 @@ class SELECT(DataManipulationQuery):
         else:
             assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
 
-        if self.set:
-            set_sql, set_args = SQLIterator(self.set)._as_sql(connection, context)
-            sql = set_sql + sql
-            args = set_args + args
-
         return sql, args
-
-    def set_copy(self):
-        """
-        Limited copy for use in set
-        Ordering, limiting and previous set not included
-        """
-        copy = self.__class__(*self.columns, DISTINCT=self.distinct)
-        copy.source = None if self.source is None else self.source.copy()
-        return copy
 
     def copy(self):
         copy = self.set_copy()
@@ -222,79 +187,71 @@ class SELECT(DataManipulationQuery):
         self.windows[name] = Window(*args, **kwargs)
         return self
 
-    @property
-    def UNION(self):
-        return SetMember(self, SetMember.UNION)
+
+class SelectSet(BaseSelect):
+    """
+    Wrapper for a set operation on SELECT statements
+    """
+
+    OP = Const('OP', """Operators""",
+        UNION=u'UNION',
+        INTERSECT=u'INTERSECT',
+        EXCEPT=u'EXCEPT',
+    )
+
+    DUP = Const('DUP', """Duplicate strategies""",
+        ALL=u' ALL',
+        DISTINCT=u' DISTINCT',
+    )
+
+    def __init__(self, left, right, op):
+        self.left = left
+        self.right = right
+        self.op = op
+        self.dup = None
+        self.order = None
+        self.limit = None
+        self.offset = None
+
+    def _as_sql(self, connection, context):
+        left_sql, left_args = self.left._as_sql(connection, context)
+        if isinstance(self.left, SelectSet):
+            left_sql = u'({sql})'.format(sql=left_sql)
+        right_sql, right_args = self.right._as_sql(connection, context)
+        if isinstance(self.right, SelectSet):
+            right_sql = u'({sql})'.format(sql=right_sql)
+        sql = u'{left} {op}{dup} {right}'.format(
+            left=left_sql,
+            op=self.op,
+            dup=self.dup or '',
+            right=right_sql,
+        )
+        args = left_args + right_args
+        if self.order is not None:
+            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
+            sql += u' ORDER BY {order}'.format(order=order_sql)
+            args += order_args
+        if self.limit is not None:
+            limit_sql, limit_args = SQL.wrap(self.limit)._as_sql(connection, context)
+            sql += u' LIMIT {limit}'.format(limit=limit_sql)
+            args += limit_args
+            if self.offset is not None:
+                offset_sql, offset_args = SQL.wrap(self.offset)._as_sql(connection, context)
+                sql += u' OFFSET {offset}'.format(offset=offset_sql)
+                args += offset_args
+        else:
+            assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
+        return sql, args
 
     @property
-    def UNION_ALL(self):
-        return SetMember(self, SetMember.UNION, all=True)
-
-    @property
-    def UNION_DISTINCT(self):
-        return SetMember(self, SetMember.UNION, all=False)
-
-    @property
-    def INTERSECT(self):
-        return SetMember(self, SetMember.INTERSECT)
-
-    @property
-    def INTERSECT_ALL(self):
-        return SetMember(self, SetMember.INTERSECT, all=True)
-
-    @property
-    def INTERSECT_DISTINCT(self):
-        return SetMember(self, SetMember.INTERSECT, all=False)
-
-    @property
-    def EXCEPT(self):
-        return SetMember(self, SetMember.EXCEPT)
-
-    @property
-    def EXCEPT_ALL(self):
-        return SetMember(self, SetMember.EXCEPT, all=True)
-
-    @property
-    def EXCEPT_DISTINCT(self):
-        return SetMember(self, SetMember.EXCEPT, all=False)
-
-    def set_add(self, member, *args, **kwargs):
-        """
-        Add a new query to the set
-        """
-        self.set.append(member)
-        self.set_init(*args, **kwargs)
+    def ALL(self):
+        self.dup = self.DUP.ALL
         return self
 
-    def ORDER_BY(self, *exprs):
-        self.order = exprs
+    @property
+    def DISTINCT(self):
+        self.dup = self.DUP.DISTINCT
         return self
-
-    def LIMIT(self, limit, offset=None):
-        self.limit = limit
-        self.offset = offset
-        return self
-
-    def OFFSET(self, offset):
-        self.offset = offset
-        return self
-
-    def AS(self, *args, **kwargs):
-        return SubqueryAlias(self, *args, **kwargs)
-
-    def count(self, connection):
-        """
-        Return count of rows in result
-        """
-        cursor = SELECT(F.count()).source(self.set).execute(connection)
-        return cursor.fetchone()[0]
-
-    def total_count(self, connection):
-        """
-        Return total count of rows in result with no limits applied
-        """
-        cursor = SELECT(F.count()).source(self.set.copy().limit(None, None)).execute(connection)
-        return cursor.fetchone()[0]
 
 
 class From(SQL):
