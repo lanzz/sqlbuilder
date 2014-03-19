@@ -625,7 +625,7 @@ class UnaryPostfixOperator(UnaryOperator):
         super(UnaryPostfixOperator, self).__init__(op, operand)
 
     def _as_sql(self, connection, context):
-        override = connection.operator_to_sql(self.op, self.left, context=context)
+        override = connection.operator_to_sql(self.op, self.operand, context=context)
         if override and (override != NotImplemented):
             # database driver overrides this operator
             return override
