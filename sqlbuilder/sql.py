@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 """
 SQL syntax
 """
 
 from __future__ import absolute_import
+from .utils import Const
 
 
 def merge_sql(iterable, sep=', '):
@@ -31,7 +33,6 @@ def NameFactory(Class, prefix=None, as_sql=None):
     """
 
     prefix = prefix or ''
-
 
     def __getattr__(self, name):
         return Class(prefix+name)
@@ -142,19 +143,19 @@ class Joinable(SQL):
 
     def LEFT_JOIN(self, other, *args, **kwargs):
         other = wrap_source(other, AS=kwargs.pop('AS', None))
-        return ConditionalJoin(self, other, type=Join.LEFT, *args, **kwargs)
+        return ConditionalJoin(self, other, type=Join.TYPE.LEFT, *args, **kwargs)
 
     def RIGHT_JOIN(self, other, *args, **kwargs):
         other = wrap_source(other, AS=kwargs.pop('AS', None))
-        return ConditionalJoin(self, other, type=Join.RIGHT, *args, **kwargs)
+        return ConditionalJoin(self, other, type=Join.TYPE.RIGHT, *args, **kwargs)
 
     def FULL_JOIN(self, other, *args, **kwargs):
         other = wrap_source(other, AS=kwargs.pop('AS', None))
-        return ConditionalJoin(self, other, type=Join.FULL, *args, **kwargs)
+        return ConditionalJoin(self, other, type=Join.TYPE.FULL, *args, **kwargs)
 
     def INNER_JOIN(self, other, *args, **kwargs):
         other = wrap_source(other, AS=kwargs.pop('AS', None))
-        return ConditionalJoin(self, other, type=Join.INNER, *args, **kwargs)
+        return ConditionalJoin(self, other, type=Join.TYPE.INNER, *args, **kwargs)
 
 
 class Alias(SQL):
@@ -299,11 +300,12 @@ class Join(Joinable):
     Abstract base class for joins
     """
 
-    # constants
-    INNER = u'INNER'
-    LEFT = u'LEFT OUTER'
-    RIGHT = u'RIGHT OUTER'
-    FULL = u'FULL OUTER'
+    TYPE = Const('TYPE', """Join types""",
+        INNER=u'INNER',
+        LEFT=u'LEFT OUTER',
+        RIGHT=u'RIGHT OUTER',
+        FULL=u'FULL OUTER',
+    )
 
     def __init__(self, left, right):
         self.left = left
@@ -318,8 +320,8 @@ class QualifiedJoin(Join):
 
     def __init__(self, left, right, type=None):
         super(QualifiedJoin, self).__init__(left, right)
-        self.type = type or self.INNER
-        assert self.type in (self.INNER, self.LEFT, self.RIGHT, self.FULL), 'Invalid join type: {type}'.format(type=self.type)
+        self.type = type
+        assert self.type in Join.TYPE, 'Invalid join type: {type}'.format(type=self.type)
 
 
 class CrossJoin(Join):
@@ -445,13 +447,13 @@ class Expression(SQL):
 
     # ORDER BY qualifiers
     @property
-    def ASC(self): return Sorting(self, Sorting.ASC)
+    def ASC(self): return Sorting(self, direction=Sorting.DIR.ASC)
     @property
-    def DESC(self): return Sorting(self, Sorting.DESC)
+    def DESC(self): return Sorting(self, direction=Sorting.DIR.DESC)
     @property
-    def NULLS_FIRST(self): return Sorting(self, nulls=Sorting.FIRST)
+    def NULLS_FIRST(self): return Sorting(self, nulls=Sorting.NULLS.FIRST)
     @property
-    def NULLS_LAST(self): return Sorting(self, nulls=Sorting.LAST)
+    def NULLS_LAST(self): return Sorting(self, nulls=Sorting.NULLS.LAST)
 
 
 class Variable(Expression):
@@ -738,20 +740,22 @@ class Sorting(SQL):
     Sorting orders are no longer expressions, as they are not allowed in operations, only in ORDER BY clauses
     """
 
-    # directions
-    ASC = u' ASC'
-    DESC = u' DESC'
+    DIR = Const('DIR', """Sort direction""",
+        ASC=u' ASC',
+        DESC=u' DESC',
+    )
 
-    # nulls ordering
-    FIRST = u' NULLS FIRST'
-    LAST = u' NULLS LAST'
+    NULLS = Const('NULLS', """NULL ordering""",
+        FIRST=u' NULLS FIRST',
+        LAST=u' NULLS LAST',
+    )
 
     def __init__(self, expr, direction=None, nulls=None):
         self.expr = expr
         self.direction = direction
         self.nulls = nulls
-        assert self.direction in (None, self.ASC, self.DESC), 'Invalid sorting direction: {dir}'.format(dir=self.direction)
-        assert self.nulls in (None, self.FIRST, self.LAST), 'Invalid sorting of nulls: {nulls}'.format(nulls=self.nulls)
+        assert self.direction is None or self.direction in self.DIR, 'Invalid sorting direction: {dir}'.format(dir=self.direction)
+        assert self.nulls is None or self.nulls in self.NULLS, 'Invalid sorting of nulls: {nulls}'.format(nulls=self.nulls)
 
     def _as_sql(self, connection, context):
         sql, args = SQL.wrap(self.expr)._as_sql(connection, context)
@@ -763,13 +767,23 @@ class Sorting(SQL):
         return sql, args
 
     @property
+    def ASC(self):
+        self.direction = self.DIR.ASC
+        return self
+
+    @property
+    def DESC(self):
+        self.direction = self.DIR.DESC
+        return self
+
+    @property
     def NULLS_FIRST(self):
-        self.nulls = self.FIRST
+        self.nulls = self.NULLS.FIRST
         return self
 
     @property
     def NULLS_LAST(self):
-        self.nulls = self.LAST
+        self.nulls = self.NULLS.LAST
         return self
 
 
@@ -778,13 +792,15 @@ class Window(SQL):
     Window definition
     """
 
-    # frame types
-    RANGE = u'RANGE'
-    ROWS = u'ROWS'
+    TYPE = Const('TYPE', """Frame types""",
+        RANGE=u'RANGE',
+        ROWS=u'ROWS',
+    )
 
-    # frame reference endpoints
-    START = u'UNBOUNDED PRECEDING'
-    END = u'UNBOUNDED FOLLOWING'
+    ENDPOINT = Const('ENDPOINT', """Reference endpoints""",
+        START=u'UNBOUNDED PRECEDING',
+        END=u'UNBOUNDED FOLLOWING',
+    )
 
     def __init__(self, window=None, PARTITION_BY=None, ORDER_BY=None, RANGE=None, ROWS=None):
         self.window = window
@@ -824,16 +840,16 @@ class Window(SQL):
             args += order_args
         if self.range or self.rows:
             if self.range:
-                frame_type = self.RANGE
+                frame_type = self.FRAME.RANGE
                 frame = self.range
             else:
-                frame_type = self.ROWS
+                frame_type = self.FRAME.ROWS
                 frame = self.rows
             try:
                 start, end = frame
             except TypeError:
                 # single value
-                start_sql, start_args = self.reference(frame, self.START)
+                start_sql, start_args = self.reference(frame, self.ENDPOINT.START)
                 clauses.append(u'{type} {start}'.format(
                     type=frame_type,
                     start=start_sql,
@@ -841,8 +857,8 @@ class Window(SQL):
                 args += start_args
             else:
                 # range
-                start_sql, start_args = self.reference(start, self.START)
-                end_sql, end_args = self.reference(end, self.END)
+                start_sql, start_args = self.reference(start, self.ENDPOINT.START)
+                end_sql, end_args = self.reference(end, self.ENDPOINT.END)
                 clauses.append(u'{type} BETWEEN {start} AND {end}'.format(
                     type=frame_type,
                     start=start_sql,
