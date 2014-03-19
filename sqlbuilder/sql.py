@@ -680,7 +680,7 @@ class IsNullOperator(UnaryPostfixOperator):
     """
 
     def __init__(self, operand, invert=False):
-        super(IsNullOperator, self).__init__(u' IS NOT NULL' if invert else u' IS NULL', operand)
+        super(IsNullOperator, self).__init__(operand, u' IS NOT NULL' if invert else u' IS NULL')
         self.invert = invert
 
     def NOT(self):
