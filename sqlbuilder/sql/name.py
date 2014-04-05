@@ -10,15 +10,17 @@ from .expression import Variable, Identifier
 from .table import Table
 
 
-def NameFactory(Class, prefix=None, as_sql=None):
+def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
     """
     Factory that returns a new class that converts attribute access to Class instances
     """
 
     prefix = prefix or ''
+    args = args or ()
+    kwargs = kwargs or {}
 
     def __getattr__(self, name):
-        return Class(prefix+name)
+        return Class(prefix+name, *args, **kwargs)
     def __setattr__(self, name, value):
         raise AttributeError(name)
     def __delattr__(self, name):
