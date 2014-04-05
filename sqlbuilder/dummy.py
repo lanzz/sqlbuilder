@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from .sql import SQL
+from .sql.base import SQL
 
 
 class DummyConnection(object):

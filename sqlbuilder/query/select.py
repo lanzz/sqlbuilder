@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from . import DataManipulationQuery, F
-from ..sql import SQL, SQLIterator, SubqueryAlias, wrap_source, Window
+from . import DataManipulationQuery, C, F, T, V
+from ..sql.base import SQL, SQLIterator
+from ..sql.alias import SubqueryAlias
+from ..sql.name import Table
+from ..sql.window import Window
 from ..utils import Const
 
 
@@ -260,7 +263,7 @@ class From(SQL):
     """
 
     def __init__(self, source, AS=None, ONLY=None):
-        self.source = wrap_source(source, AS=AS, ONLY=ONLY)
+        self.source = Table.wrap(source, AS=AS, ONLY=ONLY)
         self.where = None
         self.group_by = None
         self.having = None

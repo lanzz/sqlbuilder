@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from ..sql import SQL, Identifier, IdentifierFactory, Variable, VariableFactory, Table, TableFactory
+from ..sql.base import SQL
+from ..sql.name import Identifier, IdentifierFactory, Variable, VariableFactory, Table, TableFactory
 
 
 # importable references to identifier factory
