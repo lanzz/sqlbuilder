@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 """
 SQL joins
 """
 
+from __future__ import absolute_import
 from .base import SQL, SQLIterator
 from ..utils import Const
 from .expression import Alias
