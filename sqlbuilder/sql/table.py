@@ -16,27 +16,21 @@ class Joinable(SQL):
     """
 
     def CROSS_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return CrossJoin(self, other, *args, **kwargs)
 
     def NATURAL_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return NaturalJoin(self, other, *args, **kwargs)
 
     def LEFT_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return ConditionalJoin(self, other, type=Join.TYPE.LEFT, *args, **kwargs)
 
     def RIGHT_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return ConditionalJoin(self, other, type=Join.TYPE.RIGHT, *args, **kwargs)
 
     def FULL_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return ConditionalJoin(self, other, type=Join.TYPE.FULL, *args, **kwargs)
 
     def INNER_JOIN(self, other, *args, **kwargs):
-        other = Table.wrap(other, AS=kwargs.pop('AS', None))
         return ConditionalJoin(self, other, type=Join.TYPE.INNER, *args, **kwargs)
 
 
@@ -69,19 +63,6 @@ class Table(Joinable):
         Column identifier factory
         """
         return NameFactory(Identifier, prefix=self._name + u'.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
-
-    @classmethod
-    def wrap(cls, source, AS=None, ONLY=None):
-        """
-        Wrap join source in a `Table` instance if necessary
-        """
-        if not isinstance(source, Joinable):
-            source = cls(source, ONLY=ONLY)
-            if AS:
-                source = source.AS(AS)
-        else:
-            assert AS is None, 'Cannot assign alias to an existing source'
-        return source
 
 
 class Wildcard(SQL):

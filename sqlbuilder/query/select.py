@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from .base import DataManipulationQuery
 from ..sql.base import SQL, SQLIterator
 from ..sql.alias import SubqueryAlias
-from ..sql.name import F, Table
+from ..sql.name import F
 from ..sql.window import Window
 from ..utils import Const
 
@@ -267,7 +267,6 @@ class From(SQL):
     """
 
     def __init__(self, source, AS=None, ONLY=None):
-        self.source = Table.wrap(source, AS=AS, ONLY=ONLY)
         self.where = None
         self.group_by = None
         self.having = None
