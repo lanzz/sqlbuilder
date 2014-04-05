@@ -44,5 +44,6 @@ def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
 
 # prepare importable shorthand names for the various name factories
 T = TableFactory = NameFactory(Table)
+ONLY = NameFactory(Table, kwargs={ 'ONLY': True })
 V = VariableFactory = NameFactory(Variable)
 C = F = IdentifierFactory = NameFactory(Identifier, as_sql=lambda self, connection, context: Wildcard()._as_sql(connection, context))
