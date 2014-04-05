@@ -7,28 +7,28 @@ SQL base syntax
 from __future__ import absolute_import
 
 
-def merge_sql(iterable, sep=', '):
-    """
-    Merge an interable of (sql, args) items into a single (sql, args) tuple
-    The `sql` strings will be joind using `sep`
-    """
-
-    if iterable is None:
-        return u'', ()
-    iterable = list(iterable)
-    if not len(iterable):
-        return u'', ()
-    sql, args = zip(*iterable)
-    sql = sep.join(sql)
-    args = sum(args, ())
-    return sql, args
-
-
 class SQL(object):
     """
     Base for classes that can be rendered as SQL
     Used as a wrapper for primitive values (values and identifiers)
     """
+
+    @staticmethod
+    def merge(iterable, sep=', '):
+        """
+        Merge an interable of (sql, args) items into a single (sql, args) tuple
+        The `sql` strings will be joind using `sep`
+        """
+
+        if iterable is None:
+            return u'', ()
+        iterable = list(iterable)
+        if not len(iterable):
+            return u'', ()
+        sql, args = zip(*iterable)
+        sql = sep.join(sql)
+        args = sum(args, ())
+        return sql, args
 
     @classmethod
     def wrap(cls, value, id=False):
@@ -79,7 +79,7 @@ class SQLIterator(SQL):
         return self.__iter__()
 
     def _as_sql(self, connection, context):
-        return merge_sql((item._as_sql(connection, context) for item in self), sep=self.sep)
+        return SQL.merge((item._as_sql(connection, context) for item in self), sep=self.sep)
 
 
 from ..dummy import dummy_connection, dummy_context

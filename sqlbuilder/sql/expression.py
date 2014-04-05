@@ -5,7 +5,7 @@ SQL expressions
 """
 
 from __future__ import absolute_import
-from .base import SQL, SQLIterator, merge_sql
+from .base import SQL, SQLIterator
 
 
 class Expression(SQL):
@@ -349,7 +349,7 @@ class CaseExpression(Expression):
         return sql, cond_args + value_args
 
     def _as_sql(self, connection, context):
-        cases_sql, cases_args = merge_sql(self.case_to_sql(cond, value, connection, context) for cond, value in self.cases)
+        cases_sql, cases_args = SQL.merge(self.case_to_sql(cond, value, connection, context) for cond, value in self.cases)
         if self.else_ is not None:
             else_sql, else_args = SQL.wrap(self.else_)._as_sql(connection, context)
             else_sql = u' ELSE {value}'.format(value=else_sql)
