@@ -41,6 +41,7 @@ def NameFactory(Class, prefix=None, as_sql=None):
     return type(name, bases, attrs)()
 
 
-TableFactory = NameFactory(Table)
-VariableFactory = NameFactory(Variable)
-IdentifierFactory = NameFactory(Identifier, as_sql=lambda self, connection, context: Wildcard()._as_sql(connection, context))
+# prepare importable shorthand names for the various name factories
+T = TableFactory = NameFactory(Table)
+V = VariableFactory = NameFactory(Variable)
+C = F = IdentifierFactory = NameFactory(Identifier, as_sql=lambda self, connection, context: Wildcard()._as_sql(connection, context))
