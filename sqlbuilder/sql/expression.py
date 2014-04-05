@@ -125,20 +125,20 @@ class Identifier(Expression):
     """
 
     def __init__(self, name):
-        self.name = name
+        self._name = name
 
     def _as_sql(self, connection, context):
         """
         Render name as identifier
         """
-        return connection.quote_identifier(self.name), ()
+        return connection.quote_identifier(self._name), ()
 
     def __repr__(self):
-        return u'<Identifier {name!r}>'.format(name=self.name)
+        return u'<Identifier {name!r}>'.format(name=self._name)
 
     def __getattr__(self, name):
         return Identifier(u'{name}.{subname}'.format(
-            name=self.name,
+            name=self._name,
             subname=name,
         ))
 
@@ -146,7 +146,7 @@ class Identifier(Expression):
         """
         Wrap name in a function call wrapper
         """
-        return FunctionCall(self.name, *args, **kwargs)
+        return FunctionCall(self._name, *args, **kwargs)
 
 
 class FunctionCall(Expression):
