@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+"""
+SQL queries
+"""
+
 from __future__ import absolute_import
 
 from ..sql.base import SQL

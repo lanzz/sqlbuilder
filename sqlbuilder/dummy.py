@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+"""
+Dummy connection placeholders
+"""
 
+from __future__ import absolute_import
 from .sql.base import SQL
 
 

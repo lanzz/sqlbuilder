@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+"""
+SQL select query
+"""
+
 from __future__ import absolute_import
 
 from . import DataManipulationQuery, C, F, T, V
