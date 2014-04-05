@@ -125,7 +125,7 @@ class Identifier(Expression):
     """
 
     def __init__(self, name):
-        self._name = name
+        object.__setattr__(self, '_name', name)
 
     def _as_sql(self, connection, context):
         """
@@ -141,6 +141,9 @@ class Identifier(Expression):
             name=self._name,
             subname=name,
         ))
+
+    def __setattr__(self, name, value):
+        raise AttributeError('Names are not assignable')
 
     def __call__(self, *args, **kwargs):
         """

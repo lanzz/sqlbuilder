@@ -40,8 +40,8 @@ class Table(Joinable):
     """
 
     def __init__(self, name, ONLY=None):
-        self._name = name
-        self._only = False if ONLY is None else ONLY
+        object.__setattr__(self, '_name', name)
+        object.__setattr__(self, '_only', False if ONLY is None else ONLY)
 
     def _as_sql(self, connection, context):
         sql, args = SQL.wrap(self._name, id=True)._as_sql(connection, context)
@@ -54,6 +54,9 @@ class Table(Joinable):
             name=self._name,
             subname=name,
         ), ONLY=self._only)
+
+    def __setattr__(self, name, value):
+        raise AttributeError('Names are not assignable')
 
     def AS(self, *args, **kwargs):
         return TableAlias(self, *args, **kwargs)
