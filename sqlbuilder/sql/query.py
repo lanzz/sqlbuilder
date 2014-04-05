@@ -6,6 +6,7 @@ SQL expressions
 
 from __future__ import absolute_import
 from .base import SQL, SQLIterator
+from .table import TableAlias
 
 
 class VALUES(SQL):
