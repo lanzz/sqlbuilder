@@ -318,7 +318,7 @@ class IsNullOperator(UnaryPostfixOperator):
         return IsNullOperator(self.operand, invert=not self.invert)
 
 
-class CaseExpression(Expression):
+class CASE(Expression):
     """
     CASE operator
     """
