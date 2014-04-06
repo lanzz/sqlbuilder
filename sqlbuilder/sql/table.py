@@ -178,3 +178,6 @@ class ConditionalJoin(QualifiedJoin):
         )
         return sql, left_args + right_args + condition_args
 
+
+from .name import NameFactory
+from .expression import Identifier
