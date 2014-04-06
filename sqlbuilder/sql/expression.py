@@ -111,6 +111,7 @@ class Variable(Expression):
 
     def __init__(self, name):
         self.name = name
+        assert isinstance(self.name, basestring), 'Variable name must be a string'
 
     def _as_sql(self, connection, context):
         return SQL.wrap(context[self.name])._as_sql(connection, context)
@@ -126,6 +127,7 @@ class Identifier(Expression):
 
     def __init__(self, name):
         object.__setattr__(self, '_name', name)
+        assert isinstance(self._name, basestring), 'Identifier name must be a string'
 
     def _as_sql(self, connection, context):
         """
@@ -161,6 +163,7 @@ class FunctionCall(Expression):
         self.name = name
         self.params = params
         self.distinct = kwargs.get('DISTINCT', False)
+        assert isinstance(self.name, basestring), 'Function name must be a string'
 
     def _as_sql(self, connection, context):
         sql, args = SQLIterator(self.params)._as_sql(connection, context)
