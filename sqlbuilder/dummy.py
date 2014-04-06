@@ -4,7 +4,6 @@ Dummy connection placeholders
 """
 
 from __future__ import absolute_import
-from .sql.base import SQL
 
 
 class DummyConnection(object):
@@ -41,13 +40,16 @@ class DummyContext(object):
 dummy_context = DummyContext()
 
 
-class DummyVariable(SQL):
+class DummyVariable(object):
     """
-    Dummy variable, renders itself as literal '$name'
+    Dummy variable, renders its representation as '$name'
     """
 
     def __init__(self, name):
         self.name = name
 
-    def _as_sql(self, connection, context):
-        return u'${name}'.format(name=self.name), ()
+    def __repr__(self):
+        return '${name}'.format(name=self.name)
+
+    def __unicode__(self):
+        return repr(self)
