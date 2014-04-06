@@ -21,12 +21,15 @@ def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
         return Class(prefix+name, *args, **kwargs)
     def __setattr__(self, name, value):
         raise AttributeError('Names are not assignable')
+    def __call__(self, name):
+        return getattr(self, name)
 
     name = '{classname}Factory'.format(classname=Class.__name__)
     bases = (object,)
     attrs = dict(
         __getattr__=__getattr__,
         __setattr__=__setattr__,
+        __call__=__call__,
     )
 
     if as_sql:
