@@ -82,5 +82,5 @@ class SQLIterator(SQL):
         return SQL.merge((item._as_sql(connection, context) for item in self), sep=self.sep)
 
 
-from ..dummy import dummy_connection, dummy_context
 from .expression import Identifier, Value
+from ..dummy import dummy_connection, dummy_context

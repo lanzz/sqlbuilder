@@ -6,8 +6,6 @@ SQL name factories
 
 from __future__ import absolute_import
 from .base import SQL
-from .expression import Variable, Identifier
-from .table import Table
 
 
 def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
@@ -38,6 +36,9 @@ def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
 
     return type(name, bases, attrs)()
 
+
+from .expression import Variable, Identifier
+from .table import Table
 
 # prepare importable shorthand names for the various name factories
 T = TableFactory = NameFactory(Table)
