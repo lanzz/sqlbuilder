@@ -14,7 +14,7 @@ class Window(SQL):
     Window definition
     """
 
-    TYPE = Const('TYPE', """Frame types""",
+    FRAME = Const('FRAME', """Frame types""",
         RANGE=u'RANGE',
         ROWS=u'ROWS',
     )
