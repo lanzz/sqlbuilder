@@ -266,7 +266,8 @@ class From(SQL):
     FROM clause wrapper
     """
 
-    def __init__(self, source, AS=None, ONLY=None):
+    def __init__(self, source):
+        self.source = source
         self.where = None
         self.group_by = None
         self.having = None
