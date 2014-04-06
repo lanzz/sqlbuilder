@@ -389,3 +389,4 @@ class Alias(SQL):
 
 
 from .window import Window
+from .sort import Sorting
