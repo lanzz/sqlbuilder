@@ -144,10 +144,6 @@ class SELECT(BaseSelect):
         self.source.CROSS_JOIN(*args, **kwargs)
         return self
 
-    def NATURAL_JOIN(self, *args, **kwargs):
-        self.source.NATURAL_JOIN(*args, **kwargs)
-        return self
-
     def LEFT_JOIN(self, *args, **kwargs):
         self.source.LEFT_JOIN(*args, **kwargs)
         return self
@@ -306,10 +302,6 @@ class From(SQL):
 
     def CROSS_JOIN(self, *args, **kwargs):
         self.source = self.source.CROSS_JOIN(*args, **kwargs)
-        return self
-
-    def NATURAL_JOIN(self, *args, **kwargs):
-        self.source = self.source.NATURAL_JOIN(*args, **kwargs)
         return self
 
     def LEFT_JOIN(self, *args, **kwargs):

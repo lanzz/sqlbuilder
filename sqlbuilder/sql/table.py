@@ -18,20 +18,21 @@ class Joinable(SQL):
     def CROSS_JOIN(self, other, *args, **kwargs):
         return CrossJoin(self, other, *args, **kwargs)
 
-    def NATURAL_JOIN(self, other, *args, **kwargs):
-        return NaturalJoin(self, other, *args, **kwargs)
-
     def LEFT_JOIN(self, other, *args, **kwargs):
-        return ConditionalJoin(self, other, type=Join.TYPE.LEFT, *args, **kwargs)
+        JoinClass = NaturalJoin if kwargs.pop('NATURAL', False) else ConditionalJoin
+        return JoinClass(self, other, type=Join.TYPE.LEFT, *args, **kwargs)
 
     def RIGHT_JOIN(self, other, *args, **kwargs):
-        return ConditionalJoin(self, other, type=Join.TYPE.RIGHT, *args, **kwargs)
+        JoinClass = NaturalJoin if kwargs.pop('NATURAL', False) else ConditionalJoin
+        return JoinClass(self, other, type=Join.TYPE.RIGHT, *args, **kwargs)
 
     def FULL_JOIN(self, other, *args, **kwargs):
-        return ConditionalJoin(self, other, type=Join.TYPE.FULL, *args, **kwargs)
+        JoinClass = NaturalJoin if kwargs.pop('NATURAL', False) else ConditionalJoin
+        return JoinClass(self, other, type=Join.TYPE.FULL, *args, **kwargs)
 
     def INNER_JOIN(self, other, *args, **kwargs):
-        return ConditionalJoin(self, other, type=Join.TYPE.INNER, *args, **kwargs)
+        JoinClass = NaturalJoin if kwargs.pop('NATURAL', False) else ConditionalJoin
+        return JoinClass(self, other, type=Join.TYPE.INNER, *args, **kwargs)
 
 
 class Table(Joinable):
@@ -147,7 +148,7 @@ class NaturalJoin(QualifiedJoin):
             right=right_sql,
             type=self.type,
         )
-        return sql, args1 + args2
+        return sql, left_args + right_args
 
 
 class ConditionalJoin(QualifiedJoin):
