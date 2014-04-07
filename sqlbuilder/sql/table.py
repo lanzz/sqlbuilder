@@ -153,12 +153,12 @@ class NaturalJoin(QualifiedJoin):
 
 class ConditionalJoin(QualifiedJoin):
 
-    def __init__(self, left, right, type=None, on=None, using=None):
+    def __init__(self, left, right, type=None, ON=None, USING=None):
         super(ConditionalJoin, self).__init__(left, right, type=type)
-        self.on = on
-        if using is not None and not isinstance(using, (list, tuple)):
-            using = using,
-        self.using = using
+        self.on = ON
+        if USING is not None and not isinstance(USING, (list, tuple)):
+            using = USING,
+        self.using = USING
         assert (self.on is None or self.using is None), 'Cannot have both ON and USING clauses on a join'
         assert not (self.on is None and self.using is None), 'Either ON or USING clause is required for conditional join'
 
