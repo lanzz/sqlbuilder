@@ -109,9 +109,10 @@ class Join(Joinable):
         FULL=u'FULL OUTER',
     )
 
-    def __init__(self, left, right):
+    def __init__(self, left, right, parens=True):
         self.left = left
         self.right = right
+        self.parens = True if parens is None else parens
         assert isinstance(self.left, Joinable) and isinstance(self.right, Joinable), 'Invalid join sources'
 
 
@@ -120,8 +121,8 @@ class QualifiedJoin(Join):
     Abstract base class for qualified joins
     """
 
-    def __init__(self, left, right, type=None):
-        super(QualifiedJoin, self).__init__(left, right)
+    def __init__(self, left, right, parens=None, type=None):
+        super(QualifiedJoin, self).__init__(left, right, parens=parens)
         self.type = type
         assert self.type in Join.TYPE, 'Invalid join type: {type}'.format(type=self.type)
 
@@ -131,10 +132,12 @@ class CrossJoin(Join):
     def _as_sql(self, connection, context):
         left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
         right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
-        sql = u'({left} CROSS JOIN {right})'.format(
+        sql = u'{left} CROSS JOIN {right}'.format(
             left=left_sql,
             right=right_sql,
         )
+        if self.parens:
+            sql = u'({sql})'.format(sql=sql)
         return sql, left_args + right_args
 
 
@@ -143,18 +146,20 @@ class NaturalJoin(QualifiedJoin):
     def _as_sql(self, connection, context):
         left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
         right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
-        sql = u'({left} NATURAL {type} JOIN {right})'.format(
+        sql = u'{left} NATURAL {type} JOIN {right}'.format(
             left=left_sql,
             right=right_sql,
             type=self.type,
         )
+        if self.parens:
+            sql = u'({sql})'.format(sql=sql)
         return sql, left_args + right_args
 
 
 class ConditionalJoin(QualifiedJoin):
 
-    def __init__(self, left, right, type=None, ON=None, USING=None):
-        super(ConditionalJoin, self).__init__(left, right, type=type)
+    def __init__(self, left, right, parens=None, type=None, ON=None, USING=None):
+        super(ConditionalJoin, self).__init__(left, right, parens=parens, type=type)
         self.on = ON
         if USING is not None and not isinstance(USING, (list, tuple)):
             using = USING,
@@ -171,12 +176,14 @@ class ConditionalJoin(QualifiedJoin):
             condition_sql = u'USING ({columns})'.format(columns=columns_sql)
         left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
         right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
-        sql = u'({left} {type} JOIN {right} {condition})'.format(
+        sql = u'{left} {type} JOIN {right} {condition}'.format(
             left=left_sql,
             right=right_sql,
             type=self.type,
             condition=condition_sql,
         )
+        if self.parens:
+            sql = u'({sql})'.format(sql=sql)
         return sql, left_args + right_args + condition_args
 
 

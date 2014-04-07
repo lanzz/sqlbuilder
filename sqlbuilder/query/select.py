@@ -301,22 +301,27 @@ class From(SQL):
         return copy
 
     def CROSS_JOIN(self, *args, **kwargs):
+        kwargs.setdefault('parens', False)
         self.source = self.source.CROSS_JOIN(*args, **kwargs)
         return self
 
     def LEFT_JOIN(self, *args, **kwargs):
+        kwargs.setdefault('parens', False)
         self.source = self.source.LEFT_JOIN(*args, **kwargs)
         return self
 
     def RIGHT_JOIN(self, *args, **kwargs):
+        kwargs.setdefault('parens', False)
         self.source = self.source.RIGHT_JOIN(*args, **kwargs)
         return self
 
     def FULL_JOIN(self, *args, **kwargs):
+        kwargs.setdefault('parens', False)
         self.source = self.source.FULL_JOIN(*args, **kwargs)
         return self
 
     def INNER_JOIN(self, *args, **kwargs):
+        kwargs.setdefault('parens', False)
         self.source = self.source.INNER_JOIN(*args, **kwargs)
         return self
 
