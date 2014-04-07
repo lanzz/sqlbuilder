@@ -41,7 +41,7 @@ def NameFactory(Class, prefix=None, as_sql=None, args=None, kwargs=None):
 
 
 from .expression import Variable, Identifier
-from .table import Table
+from .table import Table, Wildcard
 
 # prepare importable shorthand names for the various name factories
 T = TableFactory = NameFactory(Table)
