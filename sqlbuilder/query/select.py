@@ -40,9 +40,6 @@ class BaseSelect(DataManipulationQuery):
         self.offset = offset
         return self
 
-    def AS(self, *args, **kwargs):
-        return SubqueryAlias(self, *args, **kwargs)
-
     def count(self, connection, **context):
         """
         Return count of rows in result
