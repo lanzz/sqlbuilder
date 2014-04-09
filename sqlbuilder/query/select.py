@@ -28,7 +28,7 @@ class BaseSelect(DataManipulationQuery):
     def __sub__(self, other): return SelectSet(self, other, SelectSet.OP.EXCEPT)
 
     def ORDER_BY(self, *exprs):
-        self.order = exprs
+        self.order = exprs or None
         return self
 
     def LIMIT(self, limit, offset=None):
