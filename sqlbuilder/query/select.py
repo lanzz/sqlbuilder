@@ -60,26 +60,39 @@ class BaseSelect(DataManipulationQuery):
 
 class SELECT(BaseSelect):
 
+    DUP = Const('DUP', """Duplicate strategies""",
+        ALL=u'ALL ',
+        DISTINCT=u'DISTINCT ',
+    )
+
     def __init__(self, *columns):
         super(SELECT, self).__init__()
-        self.distinct = None
+        self.dup = None
+        self.dup_columns = None
         self.columns = list(columns)
         self.source = None
         self.windows = {}
 
+    def ALL(self, *columns):
+        self.dup = self.DUP.ALL
+        self.dup_columns = columns
+        return self
+
     def DISTINCT(self, *columns):
-        self.distinct = columns
+        self.dup = self.DUP.DISTINCT
+        self.dup_columns = columns
         return self
 
     def _as_sql(self, connection, context):
-        if self.distinct is not None:
-            distinct_sql, distinct_args = SQLIterator(self.distinct)._as_sql(connection, context)
-            distinct_sql = u'DISTINCT {on}'.format(
-                on=u'ON ({expr}) '.format(expr=distinct_sql) if distinct_sql else u'',
+        if self.dup is not None:
+            dup_sql, dup_args = SQLIterator(self.dup_columns)._as_sql(connection, context)
+            dup_sql = u'{dup}{on}'.format(
+                dup=self.dup,
+                on=u'ON ({expr}) '.format(expr=dup_sql) if dup_sql else u'',
             )
         else:
-            distinct_sql = u''
-            distinct_args = ()
+            dup_sql = u''
+            dup_args = ()
 
         if self.columns:
             columns_sql, columns_args = SQLIterator(self.columns)._as_sql(connection, context)
@@ -87,11 +100,11 @@ class SELECT(BaseSelect):
             columns_sql = u'*'
             columns_args = ()
 
-        sql = u'SELECT {distinct}{columns}'.format(
-            distinct=distinct_sql,
+        sql = u'SELECT {dup}{columns}'.format(
+            dup=dup_sql,
             columns=columns_sql,
         )
-        args = distinct_args + columns_args
+        args = dup_args + columns_args
 
         if self.source is not None:
             source_sql, source_args = self.source._as_sql(connection, context)
