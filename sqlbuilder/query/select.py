@@ -43,18 +43,18 @@ class BaseSelect(DataManipulationQuery):
     def AS(self, *args, **kwargs):
         return SubqueryAlias(self, *args, **kwargs)
 
-    def count(self, connection):
+    def count(self, connection, **context):
         """
         Return count of rows in result
         """
-        cursor = SELECT(F.count()).source(self.set).execute(connection)
+        cursor = SELECT(F.count()).source(self.set).execute(connection, **context)
         return cursor.fetchone()[0]
 
-    def total_count(self, connection):
+    def total_count(self, connection, **context):
         """
         Return total count of rows in result with no limits applied
         """
-        cursor = SELECT(F.count()).source(self.copy().limit(None, None)).execute(connection)
+        cursor = SELECT(F.count()).source(self.copy().limit(None, None)).execute(connection, **context)
         return cursor.fetchone()[0]
 
     def _order_limit_as_sql(self, connection, context):
