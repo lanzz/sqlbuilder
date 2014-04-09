@@ -30,7 +30,7 @@ class Window(SQL):
         self.order = ORDER_BY
         self.range = RANGE
         self.rows = ROWS
-        assert not (self.range and self.rows), 'Cannot specify both RANGE and ROWS frames'
+        assert (self.range is None) or (self.rows is None), 'Cannot specify both RANGE and ROWS frames'
 
     def reference(self, offset, endpoint=None):
         if offset is None:
@@ -60,8 +60,8 @@ class Window(SQL):
                 expr=order_sql,
             ))
             args += order_args
-        if self.range or self.rows:
-            if self.range:
+        if (self.range is not None) or (self.rows is not None):
+            if self.range is not None:
                 frame_type = self.FRAME.RANGE
                 frame = self.range
             else:
