@@ -58,11 +58,12 @@ SQL Builder expressions override basic operations, and wrap them in SQL Builder 
 Rendering expressions will always add explicit parentheses for the operation evaluation order, even if you don't use parentheses in your Python expression: `C.foo + C.bar * C.baz` will render as `(foo + (bar * baz))`, due to multiplication's order of precedence being higher than addition; `(C.foo + C.bar) * C.baz` will honor your explicit evaluation order and will render as `((foo + bar) * baz)`.
 
 ```python
->>> SELECT(C.name).FROM(T.employees).WHERE((C.salary > 1000).AND(C.department == 'HR').AND(C.retired.NOT))
-<SELECT u'SELECT name FROM employees WHERE (((salary > %s) AND (department = %s)) AND (NOT retired))', (1000, 'HR')>
+>>> from sqlbuilder.query import AND, NOT
+>>> SELECT(C.name).FROM(T.employees).WHERE(AND(C.salary > 1000, C.department == 'HR', NOT(C.retired)))
+<SELECT u'SELECT name FROM employees WHERE ((salary > %s) AND (department = %s) AND (NOT retired))', (1000, 'HR')>
 ```
 
-Since Python does not allow overloading of the boolean operators (`and`, `or`, `not`, etc), those are available as methods on SQL Builder expressions; `C.foo.AND(C.bar)` will render as `(foo AND bar)` in the query, while `(C.salary > C.threshold).NOT` will render as `NOT (salary > threshold)` — note that `.NOT` is a magic attribute, you don't call it as a method.
+Since Python does not allow overloading of the boolean operators (`and`, `or`, `not`, etc), those operators are available as functions; `AND(C.foo, C.bar)` will render as `(foo AND bar)` in the query, while `NOT(C.salary > C.threshold)` will render as `NOT (salary > threshold)`.
 
 ```python
 >>> from sqlbuilder.query import F

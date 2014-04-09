@@ -53,28 +53,25 @@ class Expression(SQL):
     def __abs__(self): return FunctionCall(u'abs', self)
     def __invert__(self): return UnaryOperator(u'~', self)
 
-    # Python doesn't allow overriding of the behavior of basic logical operators, so these are methods instead
-    def AND(self, other): return BinaryOperator(self, u' AND ', other)
-    def XOR(self, other): return BinaryOperator(self, u' XOR ', other)
-    def OR(self, other): return BinaryOperator(self, u' OR ', other)
-    @property
-    def NOT(self): return UnaryOperator(u'NOT ', self)
 
-    # common SQL operators
-    def LIKE(self, other): return LikeOperator(self, other)
-    def NOT_LIKE(self, other): return LikeOperator(self, other, invert=True)
-    def ILIKE(self, other): return LikeOperator(self, other, nocase=True)
-    def NOT_ILIKE(self, other): return LikeOperator(self, other, nocase=True, invert=True)
-    def IN(self, other): return InOperator(self, other)
-    def NOT_IN(self, other): return InOperator(self, other, invert=True)
-    @property
-    def IS_NULL(self): return IsNullOperator(self)
-    @property
-    def IS_NOT_NULL(self): return IsNullOperator(self, invert=True)
+# boolean operators
+def AND(*exprs): return ChainOperator(exprs, u' AND ')
+def XOR(*exprs): return ChainOperator(exprs, u' XOR ')
+def OR(*exprs): return ChainOperator(exprs, u' OR ')
+def NOT(expr): return UnaryOperator(u'NOT ', expr)
 
-    # expressions are aliasable
-    def AS(self, *args, **kwargs): return Alias(self, *args, **kwargs)
 
+# common SQL operators
+def LIKE(left, right): return BinaryOperator(left, u' LIKE ', right)
+def NOT_LIKE(left, right): return BinaryOperator(left, u' NOT LIKE ', right)
+def ILIKE(left, right): return BinaryOperator(left, u' ILIKE ', right)
+def NOT_ILIKE(left, right): return BinaryOperator(left, u' NOT ILIKE ', right)
+def RLIKE(left, right): return BinaryOperator(left, u' RLIKE ', right)
+def NOT_RLIKE(left, right): return BinaryOperator(left, u' NOT RLIKE ', right)
+def IN(left, right): return InOperator(left, right)
+def NOT_IN(left, right): return InOperator(left, right, invert=True)
+def IS_NULL(expr): return UnaryPostfixOperator(expr, u' IS NULL')
+def IS_NOT_NULL(expr): return UnaryPostfixOperator(expr, u' IS NOT NULL')
 
 
 class Value(Expression):
@@ -188,12 +185,28 @@ class WindowFunctionCall(FunctionCall):
         return sql, call_args + window_args
 
 
+class ChainOperator(Expression):
+    """
+    Chain of similar operations (e.g. `a OP b OP c OP d ...`)
+    """
+
+    def __init__(self, expressions, op):
+        self.sqliter = SQLIterator(expressions, sep=op)
+
+    def _as_sql(self, connection, context):
+        sql, args = self.sqliter._as_sql(connection, context)
+        sql = u'({sql})'.format(sql=sql)
+        return sql, args
+
+
 class BinaryOperator(Expression):
     """
     Wrapper for a generic binary operator
     """
 
-    def __init__(self, left, op, right):
+    def __init__(self, left, op, right, invert=False):
+        if invert:
+            op = u' NOT' + op
         self.left = left
         self.op = op
         self.right = right
@@ -246,10 +259,12 @@ class UnaryOperator(Expression):
 
 class UnaryPostfixOperator(UnaryOperator):
     """
-    Wrapper for a generic unary postfix operation
+    Wrapper for a generic unary postfix operation (e.g. `a IS NULL`)
     """
 
-    def __init__(self, operand, op):
+    def __init__(self, operand, op, invert=False):
+        if invert:
+            op = u' NOT' + op
         super(UnaryPostfixOperator, self).__init__(op, operand)
 
     def _as_sql(self, connection, context):
@@ -265,54 +280,18 @@ class UnaryPostfixOperator(UnaryOperator):
         return sql, args
 
 
-class LikeOperator(BinaryOperator):
-    """
-    Wrapper for a LIKE operator
-    """
-
-    def __init__(self, left, right, nocase=False, invert=False):
-        op = u' ILIKE ' if nocase else u' LIKE '
-        if invert:
-            op = u' NOT' + op
-        super(LikeOperator, self).__init__(left, op, right)
-        self.nocase = nocase
-        self.invert = invert
-
-    @property
-    def NOT(self):
-        return LikeOperator(self.left, self.right, nocase=self.nocase, invert=not self.invert)
-
-
 class InOperator(BinaryOperator):
     """
     Wrapper for IN operator
     """
 
     def __init__(self, left, right, invert=False):
-        super(InOperator, self).__init__(left, u' NOT IN ' if invert else u' IN ', right)
-        self.invert = invert
-
-    @property
-    def NOT(self):
-        return InOperator(self.left, self.right, invert=not self.invert)
+        super(InOperator, self).__init__(left, u' IN ', right, invert=invert)
 
     def right_to_sql(self, connection, context):
         sql, args = SQLIterator(self.right)._as_sql(connection, context)
         sql = u'({items})'.format(items=sql)
         return sql, args
-
-
-class IsNullOperator(UnaryPostfixOperator):
-    """
-    Wrapper for IS NULL operator
-    """
-
-    def __init__(self, operand, invert=False):
-        super(IsNullOperator, self).__init__(operand, u' IS NOT NULL' if invert else u' IS NULL')
-        self.invert = invert
-
-    def NOT(self):
-        return IsNullOperator(self.operand, invert=not self.invert)
 
 
 class CASE(Expression):
@@ -361,4 +340,3 @@ class CASE(Expression):
 
 
 from .window import Window
-from .sort import Sorting
