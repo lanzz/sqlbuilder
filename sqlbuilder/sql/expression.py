@@ -6,6 +6,7 @@ SQL expressions
 
 from __future__ import absolute_import
 from .base import SQL, SQLIterator
+from ..utils import Const
 
 
 class Expression(SQL):
@@ -147,20 +148,35 @@ class FunctionCall(Expression):
     Function call wrapper
     """
 
-    def __init__(self, name, *params, **kwargs):
+    DUP = Const('DUP', """Duplicate strategies""",
+        ALL=u'ALL ',
+        DISTINCT=u'DISTINCT ',
+    )
+
+    def __init__(self, name, *params):
         self.name = name
         self.params = params
-        self.distinct = kwargs.get('DISTINCT', False)
+        self.dup = None
         assert isinstance(self.name, basestring), 'Function name must be a string'
 
     def _as_sql(self, connection, context):
         sql, args = SQLIterator(self.params)._as_sql(connection, context)
-        sql = u'{name}({distinct}{params})'.format(
+        sql = u'{name}({dup}{params})'.format(
             name=connection.quote_function_name(self.name),
-            distinct=u'DISTINCT ' if self.distinct else u'',
+            dup=self.dup or u'',
             params=sql,
         )
         return sql, args
+
+    @property
+    def ALL(self):
+        self.dup = self.DUP.ALL
+        return self
+
+    @property
+    def DISTINCT(self):
+        self.dup = self.DUP.DISTINCT
+        return self
 
     def OVER(self, *args, **kwargs):
         return WindowFunctionCall(self, *args, **kwargs)
