@@ -91,6 +91,7 @@ class SELECT(BaseSelect):
         self.columns = list(columns)
         self.source = None
         self.windows = {}
+        self.cte = {}
 
     def ALL(self, *columns):
         self.dup = self.DUP.ALL
@@ -145,6 +146,15 @@ class SELECT(BaseSelect):
         order_limit_sql, order_limit_args = self._order_limit_as_sql(connection, context)
         sql += order_limit_sql
         args += order_limit_args
+
+        if self.cte:
+            cte_sql, cte_args = SQLIterator(self.cte.itervalues())._as_sql(connection, context)
+            sql = u'WITH {cte} {query}'.format(
+                cte=cte_sql,
+                query=sql,
+            )
+            args = cte_args + args
+
         return sql, args
 
     def copy(self):
@@ -222,6 +232,11 @@ class SELECT(BaseSelect):
         """
         assert name not in self.windows, 'Duplicate window name: {name}'.format(name=name)
         self.windows[name] = Window(*args, **kwargs)
+        return self
+
+    def WITH(self, name, *args, **kwargs):
+        assert name not in self.cte, 'Duplicate common table expression name: {name}'.format(name=name)
+        self.cte[name] = CTE(name, *args, **kwargs)
         return self
 
 
@@ -368,6 +383,28 @@ class From(SQL):
         """
         self.having = expr
         return self
+
+
+class CTE(SQL):
+    """
+    Wrapper for common table expressions
+    """
+
+    def __init__(self, name, query, RECURSIVE=False):
+        self.name = name
+        self.query = query
+        self.recursive = RECURSIVE
+
+    def _as_sql(self, connection, context):
+        name_sql, name_args = SQL.wrap(self.name, id=True)._as_sql(connection, context)
+        query_sql, query_args = self.query._as_sql(connection, context)
+        sql = u'{name} AS ({query})'.format(
+            name=name_sql,
+            query=query_sql,
+        )
+        if self.recursive:
+            sql = u'RECURSIVE {sql}'.format(sql=sql)
+        return sql, name_args + query_args
 
 
 from ..sql.alias import SubqueryAlias
