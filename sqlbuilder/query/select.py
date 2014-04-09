@@ -90,8 +90,8 @@ class SELECT(BaseSelect):
         self.dup_columns = None
         self.columns = list(columns)
         self.source = None
-        self.windows = {}
-        self.cte = {}
+        self.windows = []
+        self.cte = []
 
     def ALL(self, *columns):
         self.dup = self.DUP.ALL
@@ -132,7 +132,7 @@ class SELECT(BaseSelect):
             args += source_args
         if self.windows:
             windows = []
-            for name, window in sorted(self.windows.iteritems()):
+            for name, window in sorted(self.windows):
                 alias_sql, alias_args = SQL.wrap(name, id=True)._as_sql(connection, context)
                 window_sql, window_args = window._as_sql(connection, context)
                 windows.append(u'{name} AS {window}'.format(
@@ -148,7 +148,7 @@ class SELECT(BaseSelect):
         args += order_limit_args
 
         if self.cte:
-            cte_sql, cte_args = SQLIterator(self.cte.itervalues())._as_sql(connection, context)
+            cte_sql, cte_args = SQLIterator(self.cte)._as_sql(connection, context)
             sql = u'WITH {cte} {query}'.format(
                 cte=cte_sql,
                 query=sql,
@@ -230,13 +230,11 @@ class SELECT(BaseSelect):
         """
         Set up a named window definition
         """
-        assert name not in self.windows, 'Duplicate window name: {name}'.format(name=name)
-        self.windows[name] = Window(*args, **kwargs)
+        self.windows.append((name, Window(*args, **kwargs)))
         return self
 
     def WITH(self, name, *args, **kwargs):
-        assert name not in self.cte, 'Duplicate common table expression name: {name}'.format(name=name)
-        self.cte[name] = CTE(name, *args, **kwargs)
+        self.cte.append(CTE(name, *args, **kwargs))
         return self
 
 
