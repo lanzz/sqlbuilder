@@ -42,16 +42,6 @@ class Sorting(SQL):
         return sql, args
 
     @property
-    def ASC(self):
-        self.direction = self.DIR.ASC
-        return self
-
-    @property
-    def DESC(self):
-        self.direction = self.DIR.DESC
-        return self
-
-    @property
     def NULLS_FIRST(self):
         self.nulls = self.NULLS.FIRST
         return self
@@ -60,3 +50,6 @@ class Sorting(SQL):
     def NULLS_LAST(self):
         self.nulls = self.NULLS.LAST
         return self
+
+def ASC(expr): return Sorting(expr, direction=Sorting.DIR.ASC)
+def DESC(expr): return Sorting(expr, direction=Sorting.DIR.DESC)

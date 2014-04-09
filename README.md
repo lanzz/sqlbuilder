@@ -141,20 +141,18 @@ You don't need to observe the mandatory SQL clause order; if you call `.LIMIT(10
 Various table joins are straightforward.
 
 ```python
->>> SELECT(C.name).FROM(T.employees).ORDER_BY((C.salary + C.bonus).ASC, C.name.DESC)
-<SELECT u'SELECT name FROM employees ORDER BY (salary + bonus) ASC, name DESC', ()>
+>>> SELECT(C.name).FROM(T.employees).ORDER_BY(C.department, ASC(C.salary + C.bonus), DESC(C.name))
+<SELECT u'SELECT name FROM employees ORDER BY department, (salary + bonus) ASC, name DESC', ()>
 ```
 
-SQL Builder expressions have magic `.ASC` and `.DESC` attributes, that turn them into ascending and descending ordering clauses respectively.
-
-Note that SQL Builder allows you to build invalid and unexpected queries using its building blocks: `SELECT(C.column.ASC).FROM(T.table)` will result in a `SELECT column ASC FROM table` query, which likely isn't what you've expected.
+The `ASC` and `DESC` functions render as ascending and descending order clause expressions; passing plain expressions or values to `.ORDER_BY` will render no `ASC` or `DESC` clause in the query.
 
 ```python
->>> SELECT(C.name).FROM(T.employees).ORDER_BY(C.department.NULLS_FIRST, C.salary.ASC.NULLS_LAST)
-<SELECT u'SELECT name FROM employees ORDER BY department NULLS FIRST, salary ASC NULLS LAST', ()>
+>>> SELECT(C.name).FROM(T.employees).ORDER_BY(ASC(C.department).NULLS_FIRST, DESC(C.salary).NULLS_LAST)
+<SELECT u'SELECT name FROM employees ORDER BY department ASC NULLS FIRST, salary DESC NULLS LAST', ()>
 ```
 
-Identifiers also have `.NULLS_FIRST` and `.NULLS_LAST` magic attributes, that render `NULLS FIRST` and `NULLS LAST` SQL clauses. Ordering is not important — both `.ASC.NULLS_FIRST` and `.NULLS_FIRST.ASC` will work.
+Ordering expressions have `.NULLS_FIRST` and `.NULLS_LAST` magic attributes, that render `NULLS FIRST` and `NULLS LAST` SQL clauses. These are only available on the result of an `ASC` or `DESC` call, so you cannot have a `NULLS FIRST` clause without an explicit direction.
 
 ```python
 >>> SELECT(C).FROM(T.foo) | SELECT(C).FROM(T.bar)

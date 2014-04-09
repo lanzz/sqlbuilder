@@ -75,15 +75,6 @@ class Expression(SQL):
     # expressions are aliasable
     def AS(self, *args, **kwargs): return Alias(self, *args, **kwargs)
 
-    # ORDER BY qualifiers
-    @property
-    def ASC(self): return Sorting(self, direction=Sorting.DIR.ASC)
-    @property
-    def DESC(self): return Sorting(self, direction=Sorting.DIR.DESC)
-    @property
-    def NULLS_FIRST(self): return Sorting(self, nulls=Sorting.NULLS.FIRST)
-    @property
-    def NULLS_LAST(self): return Sorting(self, nulls=Sorting.NULLS.LAST)
 
 
 class Value(Expression):
