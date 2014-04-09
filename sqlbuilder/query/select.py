@@ -7,7 +7,6 @@ SQL select query
 from __future__ import absolute_import
 from ..sql.query import DataManipulationQuery
 from ..sql.base import SQL, SQLIterator
-from ..sql.alias import SubqueryAlias
 from ..sql.name import F
 from ..sql.window import Window
 from ..utils import Const
@@ -345,3 +344,6 @@ class From(SQL):
         """
         self.having = expr
         return self
+
+
+from ..sql.alias import SubqueryAlias

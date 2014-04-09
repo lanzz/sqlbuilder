@@ -360,24 +360,5 @@ class CASE(Expression):
         return sql, cases_args + else_args
 
 
-class Alias(SQL):
-    """
-    Alias of an expression
-    """
-
-    def __init__(self, origin, alias):
-        self._origin = origin
-        self._alias = alias
-
-    def _as_sql(self, connection, context):
-        origin_sql, origin_args = SQL.wrap(self._origin)._as_sql(connection, context)
-        alias_sql, alias_args = SQL.wrap(self._alias, id=True)._as_sql(connection, context)
-        sql = u'{origin} AS {alias}'.format(
-            origin=origin_sql,
-            alias=alias_sql,
-        )
-        return sql, origin_args + alias_args
-
-
 from .window import Window
 from .sort import Sorting

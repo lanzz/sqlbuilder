@@ -8,7 +8,6 @@ from __future__ import absolute_import
 from .base import SQL, SQLIterator
 from .query import Query
 from ..utils import Const
-from .expression import Alias
 
 
 class Joinable(SQL):
@@ -60,9 +59,6 @@ class Table(Joinable):
     def __setattr__(self, name, value):
         raise AttributeError('Names are not assignable')
 
-    def AS(self, *args, **kwargs):
-        return TableAlias(self, *args, **kwargs)
-
     def __call__(self):
         """
         Column identifier factory
@@ -113,18 +109,6 @@ class Wildcard(SQL):
         sql, args = self.table._as_sql(connection, context)
         sql += u'.*'
         return sql, args
-
-
-class TableAlias(Alias, Joinable):
-    """
-    Alias of a table
-    """
-
-    def __getattr__(self, name):
-        return Identifier('{name}.{subname}'.format(
-            name=self._alias,
-            subname=name,
-        ))
 
 
 class Join(Joinable):

@@ -10,5 +10,6 @@ from .name import C, F, T, V, ONLY
 from .expression import CASE
 from .sort import ASC, DESC
 from .table import VALUES
+from .alias import A
 
 L = SQL.wrap

@@ -80,12 +80,27 @@ Since Python does not allow overloading of the boolean operators (`and`, `or`, `
 Function calls support a `DISTINCT` keyword parameter, which renders as a `DISTINCT` clause for an aggregate function call.
 
 ```python
->>> from sqlbuilder.query import L
->>> SELECT(F.count(C.id).AS('id_count'), (C.price * C.qty).AS('subtotal'), L('foobar').AS('literal')).FROM(T.table.AS('table_alias'))
-<SELECT u'SELECT count(id) AS id_count, (price * qty) AS subtotal, %s AS literal FROM table AS table_alias', ('foobar',)>
+>>> from sqlbuilder.query import A
+>>> SELECT(A.id_count(F.count(C.id)), A.subtotal(C.price * C.qty), A.foobar_string('foobar')).FROM(A.table_alias(T.table))
+<SELECT u'SELECT count(id) AS id_count, (price * qty) AS subtotal, %s AS foobar_string FROM table AS table_alias', ('foobar',)>
 ```
 
-You can alias your columns, expressions, literals and tables by calling `.AS('alias')` on them. You wouldn't be able to assign an alias to a plain Python value (`'foobar'.AS('literal')` wouldn't work, of course), so you need to wrap it in an SQL Builder expression — `L` is a shorthand reference to the `Value` class, which wraps primitive Python values in SQL Builder expressions, allowing you to treat them as any other SQL Builder expression in your queries.
+`A` is a name factory for aliases — you can alias your columns, expressions, literals and tables by wrapping them in `A.alias_name(...)` calls.
+
+```python
+>>> SELECT(C.foo).FROM(A.alias(T.table, columns=(C.foo, C.bar)))
+<SELECT u'SELECT foo FROM table AS alias(foo, bar)', ()>
+```
+
+Table aliases can also specify aliases for the table column names by providing a tuple in the `columns` parameter.
+
+```python
+>>> alias = 'id_count'
+>>> SELECT(A(alias, F.count('id'))).FROM(T.table)
+<SELECT u'SELECT count(%s) AS id_count FROM table', ('id',)>
+```
+
+`A(alias, expression)` is a convenience shorthand for `getattr(A, alias)(expression)`, for situations where you already have the name of the alias stored as a string in a variable.
 
 ```python
 >>> SELECT(C.foo, C.bar).FROM(T.tab).WHERE(C.cond_foo > C.cond_bar)
