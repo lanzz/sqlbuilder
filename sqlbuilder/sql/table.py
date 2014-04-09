@@ -6,6 +6,7 @@ SQL joins
 
 from __future__ import absolute_import
 from .base import SQL, SQLIterator
+from .query import Query
 from ..utils import Const
 from .expression import Alias
 
@@ -67,6 +68,35 @@ class Table(Joinable):
         Column identifier factory
         """
         return NameFactory(Identifier, prefix=self._name + u'.', as_sql=lambda _, connection, context: Wildcard(self)._as_sql(connection, context))
+
+
+class VALUES(Joinable, Query):
+    """
+    VALUES expression
+    """
+
+    def __init__(self, *values):
+        self.rows = [ values ]
+
+    def __call__(self, *values):
+        """
+        Add another row of values
+        """
+        self.rows.append(values)
+        return self
+
+    def _as_sql(self, connection, context):
+        assert len(self.rows), 'No rows in VALUE expression'
+        rows = []
+        args = ()
+        for row in self.rows:
+            row_sql, row_args = SQLIterator(row)._as_sql(connection, context)
+            rows.append(u'({row})'.format(row=row_sql))
+            args += row_args
+        sql = u'VALUES {rows}'.format(
+            rows=u', '.join(rows),
+        )
+        return sql, args
 
 
 class Wildcard(SQL):

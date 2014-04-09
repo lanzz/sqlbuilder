@@ -5,7 +5,7 @@ SQL select query
 """
 
 from __future__ import absolute_import
-from .base import DataManipulationQuery
+from ..sql.query import DataManipulationQuery
 from ..sql.base import SQL, SQLIterator
 from ..sql.alias import SubqueryAlias
 from ..sql.name import F
