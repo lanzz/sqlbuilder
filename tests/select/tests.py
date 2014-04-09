@@ -82,6 +82,161 @@ class FunctionTest(TestCase):
                     (u'SELECT count(id) OVER window', ()))
 
 
+class ExpressionTest(TestCase):
+
+    def test_lt(self):
+        self.assertSQL(SELECT(C.foo < C.bar),
+                    (u'SELECT (foo < bar)', ()))
+
+    def test_le(self):
+        self.assertSQL(SELECT(C.foo <= C.bar),
+                    (u'SELECT (foo <= bar)', ()))
+
+    def test_eq(self):
+        self.assertSQL(SELECT(C.foo == C.bar),
+                    (u'SELECT (foo = bar)', ()))
+
+    def test_ne(self):
+        self.assertSQL(SELECT(C.foo != C.bar),
+                    (u'SELECT (foo <> bar)', ()))
+
+    def test_gt(self):
+        self.assertSQL(SELECT(C.foo > C.bar),
+                    (u'SELECT (foo > bar)', ()))
+
+    def test_ge(self):
+        self.assertSQL(SELECT(C.foo >= C.bar),
+                    (u'SELECT (foo >= bar)', ()))
+
+    def test_add(self):
+        self.assertSQL(SELECT(C.foo + C.bar),
+                    (u'SELECT (foo + bar)', ()))
+
+    def test_sub(self):
+        self.assertSQL(SELECT(C.foo - C.bar),
+                    (u'SELECT (foo - bar)', ()))
+
+    def test_mul(self):
+        self.assertSQL(SELECT(C.foo * C.bar),
+                    (u'SELECT (foo * bar)', ()))
+
+    def test_div(self):
+        self.assertSQL(SELECT(C.foo / C.bar),
+                    (u'SELECT (foo / bar)', ()))
+
+    def test_floordiv(self):
+        self.assertSQL(SELECT(C.foo // C.bar),
+                    (u'SELECT (foo / bar)', ()))
+
+    def test_mod(self):
+        self.assertSQL(SELECT(C.foo % C.bar),
+                    (u'SELECT mod(foo, bar)', ()))
+
+    def test_pow(self):
+        self.assertSQL(SELECT(C.foo ** C.bar),
+                    (u'SELECT power(foo, bar)', ()))
+
+    def test_lshift(self):
+        self.assertSQL(SELECT(C.foo << C.bar),
+                    (u'SELECT (foo << bar)', ()))
+
+    def test_rshift(self):
+        self.assertSQL(SELECT(C.foo >> C.bar),
+                    (u'SELECT (foo >> bar)', ()))
+
+    def test_and(self):
+        self.assertSQL(SELECT(C.foo & C.bar),
+                    (u'SELECT (foo & bar)', ()))
+
+    def test_xor(self):
+        self.assertSQL(SELECT(C.foo ^ C.bar),
+                    (u'SELECT (foo ^ bar)', ()))
+
+    def test_or(self):
+        self.assertSQL(SELECT(C.foo | C.bar),
+                    (u'SELECT (foo | bar)', ()))
+
+    def test_neg(self):
+        self.assertSQL(SELECT(-C.foo),
+                    (u'SELECT (- foo)', ()))
+
+    def test_pos(self):
+        self.assertSQL(SELECT(+C.foo),
+                    (u'SELECT (+ foo)', ()))
+
+    def test_abs(self):
+        self.assertSQL(SELECT(abs(C.foo)),
+                    (u'SELECT abs(foo)', ()))
+
+    def test_invert(self):
+        self.assertSQL(SELECT(~C.foo),
+                    (u'SELECT (~ foo)', ()))
+
+    def test_bool_and(self):
+        self.assertSQL(SELECT(AND(C.foo, C.bar)),
+                    (u'SELECT (foo AND bar)', ()))
+
+    def test_bool_xor(self):
+        self.assertSQL(SELECT(XOR(C.foo, C.bar)),
+                    (u'SELECT (foo XOR bar)', ()))
+
+    def test_bool_or(self):
+        self.assertSQL(SELECT(OR(C.foo, C.bar)),
+                    (u'SELECT (foo OR bar)', ()))
+
+    def test_bool_not(self):
+        self.assertSQL(SELECT(NOT(C.foo)),
+                    (u'SELECT (NOT foo)', ()))
+
+    def test_like(self):
+        self.assertSQL(SELECT(LIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo LIKE %s)', ('foobar',)))
+
+    def test_not_like(self):
+        self.assertSQL(SELECT(NOT_LIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo NOT LIKE %s)', ('foobar',)))
+
+    def test_ilike(self):
+        self.assertSQL(SELECT(ILIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo ILIKE %s)', ('foobar',)))
+
+    def test_not_ilike(self):
+        self.assertSQL(SELECT(NOT_ILIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo NOT ILIKE %s)', ('foobar',)))
+
+    def test_rlike(self):
+        self.assertSQL(SELECT(RLIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo RLIKE %s)', ('foobar',)))
+
+    def test_not_rlike(self):
+        self.assertSQL(SELECT(NOT_RLIKE(C.foo, 'foobar')),
+                    (u'SELECT (foo NOT RLIKE %s)', ('foobar',)))
+
+    def test_in(self):
+        self.assertSQL(SELECT(IN(C.foo, (1, 2, 3))),
+                    (u'SELECT (foo IN (%s, %s, %s))', (1, 2, 3)))
+
+    def test_not_in(self):
+        self.assertSQL(SELECT(NOT_IN(C.foo, (1, 2, 3))),
+                    (u'SELECT (foo NOT IN (%s, %s, %s))', (1, 2, 3)))
+
+    def test_is_null(self):
+        self.assertSQL(SELECT(IS_NULL(C.foo)),
+                    (u'SELECT (foo IS NULL)', ()))
+
+    def test_is_not_null(self):
+        self.assertSQL(SELECT(IS_NOT_NULL(C.foo)),
+                    (u'SELECT (foo IS NOT NULL)', ()))
+
+    def test_precedence(self):
+        self.assertSQL(SELECT(C.foo + C.bar * C.baz),
+                    (u'SELECT (foo + (bar * baz))', ()))
+
+    def test_parens(self):
+        self.assertSQL(SELECT((C.foo + C.bar) * C.baz),
+                    (u'SELECT ((foo + bar) * baz)', ()))
+
+
 class DistinctTest(TestCase):
 
     def test_distinct(self):
