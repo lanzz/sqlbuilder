@@ -144,8 +144,8 @@ class QualifiedJoin(Join):
 class CrossJoin(Join):
 
     def _as_sql(self, connection, context):
-        left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
-        right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
+        left_sql, left_args = self.left._as_sql(connection, context)
+        right_sql, right_args = self.right._as_sql(connection, context)
         sql = u'{left} CROSS JOIN {right}'.format(
             left=left_sql,
             right=right_sql,
@@ -158,8 +158,8 @@ class CrossJoin(Join):
 class NaturalJoin(QualifiedJoin):
 
     def _as_sql(self, connection, context):
-        left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
-        right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
+        left_sql, left_args = self.left._as_sql(connection, context)
+        right_sql, right_args = self.right._as_sql(connection, context)
         sql = u'{left} NATURAL {type} JOIN {right}'.format(
             left=left_sql,
             right=right_sql,
@@ -188,8 +188,8 @@ class ConditionalJoin(QualifiedJoin):
         else:
             columns_sql, condition_args = SQLIterator(self.using)._as_sql(connection, context)
             condition_sql = u'USING ({columns})'.format(columns=columns_sql)
-        left_sql, left_args = SQL.wrap(self.left)._as_sql(connection, context)
-        right_sql, right_args = SQL.wrap(self.right)._as_sql(connection, context)
+        left_sql, left_args = self.left._as_sql(connection, context)
+        right_sql, right_args = self.right._as_sql(connection, context)
         sql = u'{left} {type} JOIN {right} {condition}'.format(
             left=left_sql,
             right=right_sql,
