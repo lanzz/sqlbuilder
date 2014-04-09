@@ -186,7 +186,8 @@ class SELECT(BaseSelect):
         """
         Set up a WHERE clause on the data source
         """
-        assert self.source is not None, 'Cannot filter query with no FROM clause'
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.WHERE(*args, **kwargs)
         return self
 
