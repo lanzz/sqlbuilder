@@ -163,22 +163,32 @@ class SELECT(BaseSelect):
         return self
 
     def CROSS_JOIN(self, *args, **kwargs):
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.CROSS_JOIN(*args, **kwargs)
         return self
 
     def LEFT_JOIN(self, *args, **kwargs):
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.LEFT_JOIN(*args, **kwargs)
         return self
 
     def RIGHT_JOIN(self, *args, **kwargs):
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.RIGHT_JOIN(*args, **kwargs)
         return self
 
     def FULL_JOIN(self, *args, **kwargs):
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.FULL_JOIN(*args, **kwargs)
         return self
 
     def INNER_JOIN(self, *args, **kwargs):
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.INNER_JOIN(*args, **kwargs)
         return self
 
@@ -195,6 +205,8 @@ class SELECT(BaseSelect):
         """
         Set up a GROUP BY clause on the data source
         """
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.GROUP_BY(*args, **kwargs)
         return self
 
@@ -202,6 +214,8 @@ class SELECT(BaseSelect):
         """
         Set up a HAVING clause on the data source
         """
+        if self.source is None:
+            raise TypeError('Cannot filter query with no FROM clause')
         self.source.HAVING(*args, **kwargs)
         return self
 
