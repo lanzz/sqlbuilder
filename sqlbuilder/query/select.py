@@ -57,6 +57,28 @@ class BaseSelect(DataManipulationQuery):
         cursor = SELECT(F.count()).source(self.copy().limit(None, None)).execute(connection)
         return cursor.fetchone()[0]
 
+    def _order_limit_as_sql(self, connection, context):
+        """
+        Render ORDER BY and LIMIT clauses
+        """
+        sql = ''
+        args = ()
+        if self.order is not None:
+            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
+            sql += u' ORDER BY {order}'.format(order=order_sql)
+            args += order_args
+        if self.limit is not None:
+            limit_sql, limit_args = SQL.wrap(self.limit)._as_sql(connection, context)
+            sql += u' LIMIT {limit}'.format(limit=limit_sql)
+            args += limit_args
+            if self.offset is not None:
+                offset_sql, offset_args = SQL.wrap(self.offset)._as_sql(connection, context)
+                sql += u' OFFSET {offset}'.format(offset=offset_sql)
+                args += offset_args
+        else:
+            assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
+        return sql, args
+
 
 class SELECT(BaseSelect):
 
@@ -123,21 +145,9 @@ class SELECT(BaseSelect):
             sql += u' WINDOW {windows}'.format(
                 windows=', '.join(windows),
             )
-        if self.order is not None:
-            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
-            sql += u' ORDER BY {order}'.format(order=order_sql)
-            args += order_args
-        if self.limit is not None:
-            limit_sql, limit_args = SQL.wrap(self.limit)._as_sql(connection, context)
-            sql += u' LIMIT {limit}'.format(limit=limit_sql)
-            args += limit_args
-            if self.offset is not None:
-                offset_sql, offset_args = SQL.wrap(self.offset)._as_sql(connection, context)
-                sql += u' OFFSET {offset}'.format(offset=offset_sql)
-                args += offset_args
-        else:
-            assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
-
+        order_limit_sql, order_limit_args = self._order_limit_as_sql(connection, context)
+        sql += order_limit_sql
+        args += order_limit_args
         return sql, args
 
     def copy(self):
@@ -242,20 +252,9 @@ class SelectSet(BaseSelect):
             right=right_sql,
         )
         args = left_args + right_args
-        if self.order is not None:
-            order_sql, order_args = SQLIterator(self.order)._as_sql(connection, context)
-            sql += u' ORDER BY {order}'.format(order=order_sql)
-            args += order_args
-        if self.limit is not None:
-            limit_sql, limit_args = SQL.wrap(self.limit)._as_sql(connection, context)
-            sql += u' LIMIT {limit}'.format(limit=limit_sql)
-            args += limit_args
-            if self.offset is not None:
-                offset_sql, offset_args = SQL.wrap(self.offset)._as_sql(connection, context)
-                sql += u' OFFSET {offset}'.format(offset=offset_sql)
-                args += offset_args
-        else:
-            assert self.offset is None, 'Cannot specify OFFSET without LIMIT clause'
+        order_limit_sql, order_limit_args = self._order_limit_as_sql(connection, context)
+        sql += order_limit_sql
+        args += order_limit_args
         return sql, args
 
     @property
