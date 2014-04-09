@@ -14,40 +14,40 @@ class Expression(SQL):
     Wrapper for an expression
     """
 
-    def __lt__(self, other): return BinaryOperator(self, u' < ', other)
-    def __le__(self, other): return BinaryOperator(self, u' <= ', other)
-    def __eq__(self, other): return BinaryOperator(self, u' = ', other)
-    def __ne__(self, other): return BinaryOperator(self, u' <> ', other)
-    def __gt__(self, other): return BinaryOperator(self, u' > ', other)
-    def __ge__(self, other): return BinaryOperator(self, u' >= ', other)
+    def __lt__(self, other): return BinaryOperator(self, u'<', other)
+    def __le__(self, other): return BinaryOperator(self, u'<=', other)
+    def __eq__(self, other): return BinaryOperator(self, u'=', other)
+    def __ne__(self, other): return BinaryOperator(self, u'<>', other)
+    def __gt__(self, other): return BinaryOperator(self, u'>', other)
+    def __ge__(self, other): return BinaryOperator(self, u'>=', other)
 
-    def __add__(self, other): return BinaryOperator(self, u' + ', other)
-    def __sub__(self, other): return BinaryOperator(self, u' - ', other)
-    def __mul__(self, other): return BinaryOperator(self, u' * ', other)
-    def __div__(self, other): return BinaryOperator(self, u' / ', other)
-    def __truediv__(self, other): return BinaryOperator(self, u' / ', other)
-    def __floordiv__(self, other): return BinaryOperator(self, u' / ', other)
+    def __add__(self, other): return BinaryOperator(self, u'+', other)
+    def __sub__(self, other): return BinaryOperator(self, u'-', other)
+    def __mul__(self, other): return BinaryOperator(self, u'*', other)
+    def __div__(self, other): return BinaryOperator(self, u'/', other)
+    def __truediv__(self, other): return BinaryOperator(self, u'/', other)
+    def __floordiv__(self, other): return BinaryOperator(self, u'/', other)
     def __mod__(self, other): return FunctionCall(u'mod', self, other)
     def __pow__(self, other): return FunctionCall(u'power', self, other)
-    def __lshift__(self, other): return BinaryOperator(self, u' << ', other)
-    def __rshift__(self, other): return BinaryOperator(self, u' >> ', other)
-    def __and__(self, other): return BinaryOperator(self, u' & ', other)
-    def __xor__(self, other): return BinaryOperator(self, u' ^ ', other)
-    def __or__(self, other): return BinaryOperator(self, u' | ', other)
+    def __lshift__(self, other): return BinaryOperator(self, u'<<', other)
+    def __rshift__(self, other): return BinaryOperator(self, u'>>', other)
+    def __and__(self, other): return BinaryOperator(self, u'&', other)
+    def __xor__(self, other): return BinaryOperator(self, u'^', other)
+    def __or__(self, other): return BinaryOperator(self, u'|', other)
 
-    def __radd__(self, other): return BinaryOperator(other, u' + ', self)
-    def __rsub__(self, other): return BinaryOperator(other, u' - ', self)
-    def __rmul__(self, other): return BinaryOperator(other, u' * ', self)
-    def __rdiv__(self, other): return BinaryOperator(other, u' / ', self)
-    def __rtruediv__(self, other): return BinaryOperator(other, u' / ', self)
-    def __rfloordiv__(self, other): return BinaryOperator(other, u' / ', self)
+    def __radd__(self, other): return BinaryOperator(other, u'+', self)
+    def __rsub__(self, other): return BinaryOperator(other, u'-', self)
+    def __rmul__(self, other): return BinaryOperator(other, u'*', self)
+    def __rdiv__(self, other): return BinaryOperator(other, u'/', self)
+    def __rtruediv__(self, other): return BinaryOperator(other, u'/', self)
+    def __rfloordiv__(self, other): return BinaryOperator(other, u'/', self)
     def __rmod__(self, other): return FunctionCall(u'mod', other, self)
     def __rpow__(self, other): return FunctionCall(u'power', other, self)
-    def __rlshift__(self, other): return BinaryOperator(other, u' << ', self)
-    def __rrshift__(self, other): return BinaryOperator(other, u' >> ', self)
-    def __rand__(self, other): return BinaryOperator(other, u' & ', self)
-    def __rxor__(self, other): return BinaryOperator(other, u' ^ ', self)
-    def __ror__(self, other): return BinaryOperator(other, u' | ', self)
+    def __rlshift__(self, other): return BinaryOperator(other, u'<<', self)
+    def __rrshift__(self, other): return BinaryOperator(other, u'>>', self)
+    def __rand__(self, other): return BinaryOperator(other, u'&', self)
+    def __rxor__(self, other): return BinaryOperator(other, u'^', self)
+    def __ror__(self, other): return BinaryOperator(other, u'|', self)
 
     def __neg__(self): return UnaryOperator(u'-', self)
     def __pos__(self): return UnaryOperator(u'+', self)
@@ -56,23 +56,23 @@ class Expression(SQL):
 
 
 # boolean operators
-def AND(*exprs): return ChainOperator(exprs, u' AND ')
-def XOR(*exprs): return ChainOperator(exprs, u' XOR ')
-def OR(*exprs): return ChainOperator(exprs, u' OR ')
-def NOT(expr): return UnaryOperator(u'NOT ', expr)
+def AND(*exprs): return ChainOperator(exprs, u'AND')
+def XOR(*exprs): return ChainOperator(exprs, u'XOR')
+def OR(*exprs): return ChainOperator(exprs, u'OR')
+def NOT(expr): return UnaryOperator(u'NOT', expr)
 
 
 # common SQL operators
-def LIKE(left, right): return BinaryOperator(left, u' LIKE ', right)
-def NOT_LIKE(left, right): return BinaryOperator(left, u' NOT LIKE ', right)
-def ILIKE(left, right): return BinaryOperator(left, u' ILIKE ', right)
-def NOT_ILIKE(left, right): return BinaryOperator(left, u' NOT ILIKE ', right)
-def RLIKE(left, right): return BinaryOperator(left, u' RLIKE ', right)
-def NOT_RLIKE(left, right): return BinaryOperator(left, u' NOT RLIKE ', right)
+def LIKE(left, right): return BinaryOperator(left, u'LIKE', right)
+def NOT_LIKE(left, right): return BinaryOperator(left, u'NOT LIKE', right)
+def ILIKE(left, right): return BinaryOperator(left, u'ILIKE', right)
+def NOT_ILIKE(left, right): return BinaryOperator(left, u'NOT ILIKE', right)
+def RLIKE(left, right): return BinaryOperator(left, u'RLIKE', right)
+def NOT_RLIKE(left, right): return BinaryOperator(left, u'NOT RLIKE', right)
 def IN(left, right): return InOperator(left, right)
 def NOT_IN(left, right): return InOperator(left, right, invert=True)
-def IS_NULL(expr): return UnaryPostfixOperator(expr, u' IS NULL')
-def IS_NOT_NULL(expr): return UnaryPostfixOperator(expr, u' IS NOT NULL')
+def IS_NULL(expr): return UnaryPostfixOperator(expr, u'IS NULL')
+def IS_NOT_NULL(expr): return UnaryPostfixOperator(expr, u'IS NOT NULL')
 
 
 class Value(Expression):
@@ -207,6 +207,7 @@ class ChainOperator(Expression):
     """
 
     def __init__(self, expressions, op):
+        op = u' {op} '.format(op=op)
         self.sqliter = SQLIterator(expressions, sep=op)
 
     def _as_sql(self, connection, context):
@@ -222,7 +223,7 @@ class BinaryOperator(Expression):
 
     def __init__(self, left, op, right, invert=False):
         if invert:
-            op = u' NOT' + op
+            op = u'NOT ' + op
         self.left = left
         self.op = op
         self.right = right
@@ -235,7 +236,7 @@ class BinaryOperator(Expression):
         left_sql, left_args = self.left_to_sql(connection, context)
         right_sql, right_args = self.right_to_sql(connection, context)
         try:
-            sql = u'({left}{op}{right})'.format(
+            sql = u'({left} {op} {right})'.format(
                 left=left_sql,
                 op=self.op,
                 right=right_sql,
@@ -266,7 +267,7 @@ class UnaryOperator(Expression):
             # database driver overrides this operator
             return override
         sql, args = SQL.wrap(self.operand)._as_sql(connection, context)
-        sql = u'({op}{operand})'.format(
+        sql = u'({op} {operand})'.format(
             op=self.op,
             operand=sql,
         )
@@ -280,7 +281,7 @@ class UnaryPostfixOperator(UnaryOperator):
 
     def __init__(self, operand, op, invert=False):
         if invert:
-            op = u' NOT' + op
+            op = u'NOT ' + op
         super(UnaryPostfixOperator, self).__init__(op, operand)
 
     def _as_sql(self, connection, context):
@@ -289,7 +290,7 @@ class UnaryPostfixOperator(UnaryOperator):
             # database driver overrides this operator
             return override
         sql, args = SQL.wrap(self.operand)._as_sql(connection, context)
-        sql = u'({operand}{op})'.format(
+        sql = u'({operand} {op})'.format(
             op=self.op,
             operand=sql,
         )
@@ -302,7 +303,7 @@ class InOperator(BinaryOperator):
     """
 
     def __init__(self, left, right, invert=False):
-        super(InOperator, self).__init__(left, u' IN ', right, invert=invert)
+        super(InOperator, self).__init__(left, u'IN', right, invert=invert)
 
     def right_to_sql(self, connection, context):
         sql, args = SQLIterator(self.right)._as_sql(connection, context)
