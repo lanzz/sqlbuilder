@@ -67,8 +67,8 @@ class SELECT(BaseSelect):
         self.source = None
         self.windows = {}
 
-    def DISTINCT(self, *expr):
-        self.distinct = expr
+    def DISTINCT(self, *columns):
+        self.distinct = columns
         return self
 
     def _as_sql(self, connection, context):
