@@ -60,7 +60,7 @@ class BaseSelect(DataManipulationQuery):
 
 class SELECT(BaseSelect):
 
-    def __init__(self, *columns, **kwargs):
+    def __init__(self, *columns):
         super(SELECT, self).__init__()
         self.distinct = None
         self.columns = list(columns)
