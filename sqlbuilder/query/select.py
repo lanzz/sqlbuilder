@@ -215,8 +215,8 @@ class SelectSet(BaseSelect):
     )
 
     DUP = Const('DUP', """Duplicate strategies""",
-        ALL=u' ALL',
-        DISTINCT=u' DISTINCT',
+        ALL=u'ALL ',
+        DISTINCT=u'DISTINCT ',
     )
 
     def __init__(self, left, right, op):
@@ -235,7 +235,7 @@ class SelectSet(BaseSelect):
         right_sql, right_args = self.right._as_sql(connection, context)
         if isinstance(self.right, SelectSet):
             right_sql = u'({sql})'.format(sql=right_sql)
-        sql = u'{left} {op}{dup} {right}'.format(
+        sql = u'{left} {op} {dup}{right}'.format(
             left=left_sql,
             op=self.op,
             dup=self.dup or '',
